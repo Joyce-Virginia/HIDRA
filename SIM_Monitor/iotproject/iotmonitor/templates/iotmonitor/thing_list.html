@@ -1,0 +1,82 @@
+{% extends 'iotmonitor/base.html' %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-md-8">
+        <!--	<h5>what's being monitored:</h5>-->
+        <div class="accordion" id="things-accordion">
+            {% for type in types %}
+            <div class="card">
+                <div class="card-header bg-info p-0" id="heading{{ type.id }}">
+                    <button class="btn btn-block text-left text-white" type="button" data-toggle="collapse"
+                            data-target="#collapse{{ type.id }}" aria-expanded="true"
+                            aria-controls="collapse{{ type.id }}">
+                        {{ type.name }} ( {{ type.things_count }} )
+                        <span aria-hidden="true" class="accordion-icon float-right"></span>
+                    </button>
+                </div>
+                <div id="collapse{{ type.id }}" class="collapse show" aria-labelledby="heading{{ type.id }}"
+                     data-parent="#things-accordion">
+                    <div class="card-body">
+                        <p class="font-italic">{{ type.description }}</p>
+                        <ul class="">
+                            {% for thing in type.thing_set.all|dictsort:"name" %}
+                            <div>
+                                <li class="">
+                                    <a href="{% url 'thing_detail' pk=thing.pk %}">
+                                        {{ thing.name }}
+                                    </a>
+                                    - {{ thing.description|truncatechars:150 }}
+                                </li>
+                            </div>
+                            {% empty %}
+                            <div class="font-italic">
+                                There's nothing of this type recorded in the database yet. In order to do so,
+                                please access the <a href="{% url 'admin:index' %}">admin</a> interface</p>
+                            </div>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            {% if things_without_type|length <= 0 %}
+            <p>Sorry, nothing has been recorded in the database yet. Please access the <a
+                    href="{% url 'admin:index' %}">admin</a> interface</p>
+            {% endif %}
+            {% endfor %}
+
+            {% if things_without_type|length > 0 %}
+            <div class="card">
+                <div class="card-header bg-info p-0" id="headingTypeless">
+                    <button class="btn btn-block text-left text-white" type="button" data-toggle="collapse"
+                            data-target="#collapseTypeless" aria-expanded="true"
+                            aria-controls="collapseTypeless">
+                        Uncategorized things ( {{ things_without_type|length }} )
+                    </button>
+                </div>
+                <div id="collapseTypeless" class="collapse show" aria-labelledby="headingTypeless"
+                     data-parent="#things-accordion">
+                    <div class="card-body">
+                        <p class="font-italic">{{ type.description }}</p>
+                        <ul class="">
+                            {% for thing in things_without_type|dictsort:"name" %}
+                            <div>
+                                <li class="">
+                                    <a href="{% url 'thing_detail' pk=thing.pk %}">
+                                        {{ thing.name }}
+                                    </a>
+                                    - {{ thing.description|truncatechars:150 }}
+                                </li>
+                            </div>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
