@@ -1,17 +1,17 @@
 {% extends 'iotmonitor/base.html' %}
 
-{% block title %}Página Inicial - HIDRA{% endblock %}
+{% block title %}Cadastro - HIDRA{% endblock %}
 
 {% block header %}
 <header>
     <nav class="navbar navbar-dark justify-content-between" style="background-color: #052c53;">
-        <a class="navbar-brand">Bem-vindo ao projeto</a>
+        <a class="navbar-brand">Faça seu cadastro</a>
         <ul class="navbar-nav flex-row">
             <li class="nav-item mx-2">
                 <a class="nav-link" href="{% url 'login' %}">Login</a>
             </li>
             <li class="nav-item mx-2">
-                <a class="nav-link" href="{% url 'cadastro' %}">Cadastre-se</a>
+                <a class="nav-link" href="{% url 'homepage' %}">Página inicial</a>
             </li>
         </ul>
     </nav>
@@ -19,5 +19,5 @@
 {% endblock %}
 
 {% block content %}
-    <h1 class="text-center">Bem-vindo ao projeto HIDRA</h1>
+    <h1 class="text-center"> [[ FORMULARIO DE CADASTRO AQUI ]] </h1>
 {% endblock %}

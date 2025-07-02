@@ -20,5 +20,6 @@ from iotmonitor import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('iotmonitor/', include('iotmonitor.urls')),
-    path('',views.homepage)
+    path('',views.homepage),
+    path('login/', views.login)
 ]

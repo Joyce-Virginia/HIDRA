@@ -1,0 +1,284 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}HIDRA - Login{% endblock %}</title>
+
+    <!-- Adicionando Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="shortcut icon" type="image/png" href="{% static 'iotmonitor/Hidra_logo.ico' %}" />
+
+    <style>
+        .login_form_wrapper {
+            width: 100%;
+            padding-top: 40px;
+            padding-bottom: 10px;
+            background-color: #052c53;
+        }
+
+        /* Estilo para o container do logo */
+        .logo_container {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .logo_container img {
+            height: 180px;
+            width: 180px;
+            background-color: transparent;
+            border-radius: 0%;
+        }
+
+        .login_wrapper {
+            margin: 0 auto;
+            max-width: 600px;
+            background: #fff;
+            padding: 50px;
+            border-radius: 8px;
+        }
+
+        .login_wrapper a.btn {
+            color: #fff;
+            width: 100%;
+            height: 50px;
+            padding: 6px 25px;
+            line-height: 36px;
+            margin-bottom: 20px;
+            text-align: left;
+            border-radius: 5px;
+            background: #4385f5;
+            font-size: 16px;
+            border: 1px solid #4385f5;
+        }
+
+        .login_wrapper a i {
+            float: right;
+            margin: 0;
+            line-height: 35px;
+        }
+
+        .login_wrapper a.google-plus {
+            background: #db4c3e;
+            border: 1px solid #db4c3e;
+        }
+
+        .login_wrapper h2 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #111;
+            line-height: 20px;
+            text-transform: uppercase;
+            text-align: center;
+            position: relative;
+        }
+
+        .login_wrapper .formsix-pos,
+        .formsix-e {
+            position: relative;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .login_wrapper .form-control {
+            height: 53px;
+            padding: 15px 20px;
+            font-size: 14px;
+            line-height: 24px;
+            border: 1px solid #fafafa;
+            border-radius: 3px;
+            box-shadow: none;
+            font-family: 'Roboto';
+            transition: all 0.3s ease 0s;
+            background-color: #fafafa;
+        }
+
+        .login_wrapper .form-control:focus {
+            color: #052c53;
+            background-color: #fafafa;
+            border: 1px solid #4285f4 !important;
+        }
+
+        .login_remember_box {
+            margin-top: 30px;
+            margin-bottom: 30px;
+            color: #052c53;
+        }
+
+        .login_remember_box .control {
+            position: relative;
+            padding-left: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .login_remember_box .control input {
+            position: absolute;
+            z-index: -1;
+            opacity: 0;
+        }
+
+        .login_remember_box .control__indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 15px;
+            height: 15px;
+            background: #fff;
+            border: 1px solid #052c53;
+        }
+
+        .login_remember_box .forget_password {
+            float: right;
+            color: #db4c3e;
+            line-height: 12px;
+            text-decoration: underline;
+        }
+
+        .login_btn_wrapper {
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e4e4e4;
+        }
+
+        .login_btn_wrapper a.login_btn {
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .login_message p {
+            text-align: center;
+            font-size: 16px;
+            margin: 0;
+        }
+
+        p {
+            color: #999999;
+            font-size: 14px;
+            line-height: 24px;
+        }
+
+        .login_wrapper a.login_btn:hover {
+            background-color: #2c6ad4;
+            border-color: #2c6ad4;
+        }
+
+        .login_wrapper a.btn:hover {
+            background-color: #2c6ad4;
+            border-color: #2c6ad4;
+        }
+
+        .login_wrapper a.google-plus:hover {
+            background: #bd4033;
+            border-color: #bd4033;
+        }
+
+        /* Estilo para o botão do Google */
+        .google-signin-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            color: #3c4043;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .google-signin-btn:hover {
+            background-color: #f8f9fa;
+            color: #3c4043;
+            text-decoration: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .google-signin-btn svg {
+            margin-right: 12px;
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    {% block header %}
+    <header>
+        <nav class="navbar navbar-dark justify-content-between" style="background-color: #052c53;">
+            <a class="navbar-brand">Entre para acessar ao projeto</a>
+            <ul class="navbar-nav flex-row">
+                <li class="nav-item mx-2">
+                    <a class="nav-link" href="{% url 'homepage' %}">Página inicial</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    {% endblock %}
+
+    {% block content %}
+
+    <div class="login_form_wrapper">
+        <div class="container">
+            <!-- Logo movido para dentro do container com fundo azul -->
+            <div class="logo_container">
+                <img src="{% static 'iotmonitor/Hidra_logo.ico' %}" alt="HIDRA Logo">
+            </div>
+            <div class="login_wrapper">
+                <div class="formsix-pos">
+                    <div class="form-group i-email">
+                        <input type="email" class="form-control" required="" id="email2"
+                            placeholder="Endereço de e-mail">
+                    </div>
+                </div>
+                <div class="formsix-e">
+                    <div class="form-group i-password">
+                        <input type="password" class="form-control" required="" id="password2" placeholder="Senha">
+                    </div>
+                </div>
+                <div class="login_remember_box">
+                    <label class="control control--checkbox">Lembrar-me
+                        <input type="checkbox">
+                        <span class="control__indicator"></span>
+                    </label>
+                    <a href="#" class="forget_password">Esqueci a senha</a>
+                </div>
+                <div class="login_btn_wrapper">
+                    <a href="#" class="btn btn-primary login_btn">Entrar</a>
+                </div>
+
+                <!-- Botão do Google melhorado -->
+                <a href="#" class="google-signin-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height="18" width="18">
+                        <path fill="#4285f4" d="M386 400c45-42 65-112 53-179H260v74h102c-4 24-18 44-38 57z"></path>
+                        <path fill="#34a853" d="M90 341a192 192 0 0 0 296 59l-62-48c-53 35-141 22-171-60z"></path>
+                        <path fill="#fbbc02" d="M153 292c-8-25-8-48 0-73l-63-49c-23 46-30 111 0 171z">
+                        </path>
+                        <path fill="#ea4335" d="M153 219c22-69 116-109 179-50l55-54c-78-75-230-72-297 55z"></path>
+                    </svg>
+                    Continuar com o Google
+                </a>
+
+                <div class="login_message">
+                    <p>Não tem acesso a conta? <a href="#">Cadastre-se</a></p>
+                </div>
+            </div>
+            <!-- /.login_wrapper-->
+        </div>
+    </div>
+
+    {% endblock %}
+
+</body>
+
+</html>

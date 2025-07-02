@@ -3,18 +3,23 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Simple IoT Monitor</title>
+    <title>{% block title %}HIDRA - Hardware Integrado de Diagnóstico e Registro Ambiental{% endblock %}</title>
+
     <link rel="stylesheet" href="{% static 'iotmonitor/lib/bootstrap.min.css' %}">
-    <link rel="shortcut icon" type="image/png" href="{% static 'iotmonitor/favicon.ico' %}"/>
+    <link rel="shortcut icon" type="image/png" href="{% static 'iotmonitor/Hidra_logo.ico' %}" />
+
+    {% block extra_head %}{% endblock %}
 
     <style>
         html {
             overflow: -moz-scrollbars-vertical;
             overflow-y: scroll;
         }
+
         .container {
             padding: 40px 15px;
         }
+
         [data-toggle="collapse"] .accordion-icon:before {
             content: "△";
         }
@@ -23,39 +28,34 @@
             content: "▽";
         }
     </style>
-
 </head>
+
 <body>
 
-<header>
-    <nav class="navbar navbar-dark bg-dark">
-        <a class="navbar-brand" href="{% url 'thing_list' %}">Simple IoT Monitor</a>
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'admin:index' %}">Admin</a>
-            </li>
-        </ul>
-    </nav>
-</header>
+    {% block header %}
+    <header>
+        <nav class="navbar navbar-dark" style="background-color: #052c53;">
+            <a class="navbar-brand" href="{% url 'thing_list' %}">Simple IoT Monitor</a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin:index' %}">Admin</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    {% endblock %}
 
-<main role="main" class="flex-shrink-0">
-    <div class="content container">
+    <main role="main" class="flex-shrink-0">
+        <div class="content container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
 
-                {% block content %}
-                {% endblock %}
+    <script src="{% static 'js/awesome_django_timezones.js' %}"></script>
+    <script src="{% static 'iotmonitor/lib/jquery-3.5.1.slim.min.js' %}" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="{% static 'iotmonitor/lib/bootstrap.min.js' %}" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
 
-    </div>
-</main>
-
-<script src="{% static 'js/awesome_django_timezones.js' %}"></script>
-
-<script src="{% static 'iotmonitor/lib/jquery-3.5.1.slim.min.js' %}"
-    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
-    crossorigin="anonymous"></script>
-
-<script src="{% static 'iotmonitor/lib/bootstrap.min.js' %}"
-    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
-    crossorigin="anonymous"></script>
+    {% block extra_scripts %}{% endblock %}
 
 </body>
 </html>

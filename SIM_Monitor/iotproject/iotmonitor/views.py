@@ -28,6 +28,12 @@ firebase = pyrebase.initialize_app(config)
 def homepage(request):
     return render(request, 'iotmonitor/homepage.html')
 
+def login(request):
+    return render(request, 'iotmonitor/login.html')
+
+def cadastro(request):
+    return render(request, 'iotmonitor/cadastro.html')
+
 def thing_list(request):
     types = TypeOfThing.objects.all().order_by('name').annotate(things_count=Count('thing'))
     things_without_type = Thing.objects.filter(type_of_thing__isnull=True)
