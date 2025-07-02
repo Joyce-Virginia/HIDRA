@@ -14,8 +14,9 @@
         .login_form_wrapper {
             width: 100%;
             padding-top: 40px;
-            padding-bottom: 10px;
+            padding-bottom: 40px;
             background-color: #052c53;
+            min-height: 100vh;
         }
 
         /* Estilo para o container do logo */
@@ -207,24 +208,46 @@
         .google-signin-btn svg {
             margin-right: 12px;
         }
+
+        /* Estilos para visualizar senha */
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            z-index: 10;
+            width: 20px;
+            height: 20px;
+        }
+
+        .password-toggle-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .password-toggle-btn:hover {
+            opacity: 0.8;
+        }
+
+        .password-toggle-btn:focus {
+            outline: none;
+            opacity: 0.8;
+        }
     </style>
 
     {% block extra_head %}{% endblock %}
 </head>
 
 <body>
-    {% block header %}
-    <header>
-        <nav class="navbar navbar-dark justify-content-between" style="background-color: #052c53;">
-            <a class="navbar-brand">Entre para acessar ao projeto</a>
-            <ul class="navbar-nav flex-row">
-                <li class="nav-item mx-2">
-                    <a class="nav-link" href="{% url 'homepage' %}">Página inicial</a>
-                </li>
-            </ul>
-        </nav>
-    </header>
-    {% endblock %}
 
     {% block content %}
 
@@ -235,6 +258,7 @@
                 <img src="{% static 'iotmonitor/Hidra_logo.ico' %}" alt="HIDRA Logo">
             </div>
             <div class="login_wrapper">
+                <h2>Entrar na conta</h2>
                 <div class="formsix-pos">
                     <div class="form-group i-email">
                         <input type="email" class="form-control" required="" id="email2"
@@ -242,8 +266,12 @@
                     </div>
                 </div>
                 <div class="formsix-e">
-                    <div class="form-group i-password">
+                    <div class="form-group i-password password-toggle">
                         <input type="password" class="form-control" required="" id="password2" placeholder="Senha">
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword('password2')">
+                            <img src="{% static 'iotmonitor/senha_invisivel.png' %}" alt="Mostrar senha"
+                                id="toggle-icon-password2">
+                        </button>
                     </div>
                 </div>
                 <div class="login_remember_box">
@@ -254,7 +282,7 @@
                     <a href="#" class="forget_password">Esqueci a senha</a>
                 </div>
                 <div class="login_btn_wrapper">
-                    <a href="#" class="btn btn-primary login_btn">Entrar</a>
+                    <a href="{% url 'thing_list' %}" class="btn btn-primary login_btn">Entrar</a>
                 </div>
 
                 <!-- Botão do Google melhorado -->
@@ -270,7 +298,10 @@
                 </a>
 
                 <div class="login_message">
-                    <p>Não tem acesso a conta? <a href="#">Cadastre-se</a></p>
+                    <p>Não tem acesso a conta? <a href="{% url 'cadastro' %}">Cadastre-se</a></p>
+                </div>
+                <div class="login_message">
+                    <p>Voltar para a <a href="{% url 'homepage' %}">Página inicial</a></p>
                 </div>
             </div>
             <!-- /.login_wrapper-->
@@ -278,6 +309,26 @@
     </div>
 
     {% endblock %}
+
+    <script>
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleBtn = passwordField.nextElementSibling;
+            const toggleIcon = document.getElementById('toggle-icon-' + fieldId);
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.src = "{% static 'iotmonitor/senha_visivel.png' %}";
+                toggleIcon.alt = 'Ocultar senha';
+                toggleBtn.title = 'Ocultar senha';
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.src = "{% static 'iotmonitor/senha_invisivel.png' %}";
+                toggleIcon.alt = 'Mostrar senha';
+                toggleBtn.title = 'Mostrar senha';
+            }
+        }
+    </script>
 
 </body>
 
