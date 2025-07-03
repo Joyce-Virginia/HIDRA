@@ -8,7 +8,10 @@
 <div class="row">
     <div class="col-md-10">
         <div class="thing">
-            <h2>{{ thing.type_of_thing.name }} {{ thing.name }}</h2>
+            <h2 class="mb-3">
+                <i class="fas fa-thermometer-half text-info"></i>
+                {{ thing.type_of_thing.name }} <span class="text-secondary">{{ thing.name }}</span>
+            </h2>
             <p class="font-italic">{{ thing.description|linebreaksbr }}</span></p>
         </div>
     </div>
@@ -20,163 +23,182 @@
             {% for sensor in sensors %}
 
             <div class="card">
-                <div class="card-header bg-info p-0" id="heading{{ sensor.id }}">
-                    <button class="btn btn-block text-left text-white collapsed" type="button" data-toggle="collapse"
-                            data-target="#collapse{{ sensor.id }}" aria-expanded="false"
-                            aria-controls="collapse{{ sensor.id }}"
-                            title="Use this sensor name when sending data: {{sensor.user.username}}">
-                        {{sensor.name}} ({{sensor.user.username}})
-                        <span aria-hidden="true" class="accordion-icon float-right"></span>
-                    </button>
-                </div>
-                <div id="collapse{{ sensor.id }}" class="collapse" aria-labelledby="heading{{ sensor.id }}"
-                     data-parent="#things-accordion">
-                    <div class="card-body">
-                        <p class="font-italic">{{ sensor.description|linebreaksbr }}</span></p>
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-microchip mr-2"></i>{{sensor.name}}
+                            <small>({{sensor.user.username}})</small>
+                        </h5>
+                        <button class="btn btn-light btn-sm" data-toggle="collapse"
+                            data-target="#collapse{{ sensor.id }}">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div id="collapse{{ sensor.id }}" class="collapse" aria-labelledby="heading{{ sensor.id }}"
+                        data-parent="#things-accordion">
+                        <div class="card-body">
+                            <p class="font-italic">{{ sensor.description|linebreaksbr }}</span></p>
 
-                        {% if sensor.reading_set.all %}
+                            {% if sensor.reading_set.all %}
                             <div class="alert alert-dark">
-                                Highest reading (all time): <span class="font-weight-bold">
-                                {{sensor.reading_set|max_value|floatformat:2}} </span><br>
-
-                                Lowest reading (all time):<span class="font-weight-bold">
-                                {{sensor.reading_set|min_value|floatformat:2}} </span><br>
-
-                                Average reading (all time): <span class="font-weight-bold">
-                                {{sensor.reading_set|avg_value|floatformat:2}} </span><br>
+                                <div class="row text-center mb-3">
+                                    <div class="col-md-4">
+                                        <div class="card bg-light border-info">
+                                            <div class="card-body">
+                                                <h6 class="text-info">Maior valor (todo o tempo)</h6>
+                                                <p class="font-weight-bold display-4">
+                                                    {{sensor.reading_set|max_value|floatformat:2}}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-light border-success">
+                                            <div class="card-body">
+                                                <h6 class="text-success">Menor valor (todo o tempo)</h6>
+                                                <p class="font-weight-bold display-4">
+                                                    {{sensor.reading_set|min_value|floatformat:2}}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-light border-warning">
+                                            <div class="card-body">
+                                                <h6 class="text-warning">Média (todo o tempo)</h6>
+                                                <p class="font-weight-bold display-4">
+                                                    {{sensor.reading_set|avg_value|floatformat:2}}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="alert alert-dark">
                                 {% if sensor.reading_set|is_today %}
-                                    Highest reading (today): <span class="font-weight-bold">
+                                Maior valor (hoje): <span class="font-weight-bold">
                                     {{sensor.reading_set|is_today|max_value|floatformat:2}} </span><br>
 
-                                    Lowest reading (today): <span class="font-weight-bold">
+                                Menor valor (hoje): <span class="font-weight-bold">
                                     {{sensor.reading_set|is_today|min_value|floatformat:2}} </span><br>
 
-                                    Average reading (today): <span class="font-weight-bold">
+                                Média (hoje): <span class="font-weight-bold">
                                     {{sensor.reading_set|is_today|avg_value|floatformat:2}} </span><br>
 
-                                    Number of readings (today): <span class="font-weight-bold">
+                                Número de leitura (hoje): <span class="font-weight-bold">
                                     {{sensor.reading_set|is_today|length}} </span><br>
                                 {% else %}
-                                    No reading was recorded today
+                                Nenhuma leitura foi gravada hoje
                                 {% endif %}
                             </div>
 
-                        {% endif %}
+                            {% endif %}
 
-                        <hr>
-                        {% if sensor.reading_set.all %}
-                        <!-- Create a Chart -->
-            <canvas id="{{sensor.name}}" width="300" height="100" title="last 30 readings from the sensor"></canvas>
+                            <hr>
+                            {% if sensor.reading_set.all %}
+                            <!-- Create a Chart -->
+                            <div class="card mb-4 shadow-sm">
+                                <div class="card-header bg-white">
+                                    <strong class="text-muted">Últimas 30 leituras - {{sensor.name}}</strong>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="{{sensor.name}}" width="100%" height="40"></canvas>
+                                </div>
+                            </div>
 
-            {% block scripts %}
-            <script>
-            Chart.defaults.global.defaultFontColor = 'black';
-            Chart.defaults.global.defaultFontSize = 14;
+                            {% block scripts %}
+                            <script>
+                                Chart.defaults.global.defaultFontColor = 'black';
+                                Chart.defaults.global.defaultFontSize = 14;
 
-            var ctx = document.getElementById("{{sensor.name}}");
+                                var ctx = document.getElementById("{{sensor.name}}");
 
-            var dates = []
-            var value = []
+                                var dates = []
+                                var value = []
 
-            {% for reading in sensor.reading_set.all|slice:"0:30" reversed %}
+                                {% for reading in sensor.latest_30_readings %}
 
-            dates.push('{{reading.created_date|date:"d M Y H:i:s"}}');
-            value.push('{{ reading.value }}');
+                                dates.push('{{reading.created_date|date:"d M Y H:i:s"}}');
+                                value.push('{{ reading.value }}');
 
-            {% endfor %}
+                                {% endfor %}
 
-            var productsChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: '{{sensor.name}}',
-                        data: value,
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderColor: 'rgba(255,99,132,1)',
-                        borderWidth: 1,
-                        cubicInterpolationMode: 'monotone'
-                    }]
-                },
-                options: {
-                    tooltips: {
-                        intersect: false,
-                        mode: 'index',
-                    },
-                    scales: {
-                        xAxes: [{
-                            display: false,
-                            scaleLabel: {
-                                display: false
-                            }
-                        }],
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero:false
-                            }
-                        }]
-                    }
-                }
-            });
-            </script>
-            {% endblock %}
+                                var productsChart = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: dates,
+                                        datasets: [{
+                                            label: '{{sensor.name}}',
+                                            data: value,
+                                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                            borderColor: 'rgba(255,99,132,1)',
+                                            borderWidth: 1,
+                                            cubicInterpolationMode: 'monotone'
+                                        }]
+                                    },
+                                    options: {
+                                        tooltips: {
+                                            intersect: false,
+                                            mode: 'index',
+                                        },
+                                        scales: {
+                                            xAxes: [{
+                                                display: false,
+                                                scaleLabel: {
+                                                    display: false
+                                                }
+                                            }],
+                                            yAxes: [{
+                                                ticks: {
+                                                    beginAtZero: false
+                                                }
+                                            }]
+                                        }
+                                    }
+                                });
+                            </script>
+                            {% endblock %}
 
-            <!-- end of create chart -->
-                        <hr>
-            {% endif %}
+                            <!-- end of create chart -->
+                            <hr>
+                            {% endif %}
 
 
-                        <h5 title="Last 10 readings">Most recent readings</h5>
-                        <table class="table table-hover table-sm">
-                            <thead>
-                            <tr>
-                                <th scope="col">
-                                    Date
-                                </th>
-                                <th scope="col">
-                                    Time
-                                </th>
-                                <th scope="col">
-                                    Value
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% for reading in sensor.reading_set.all|slice:"0:10" %}
-                            <tr>
-                                <td for="{{ foorloop.counter }}">
-                                    {{reading.created_date|date:"d/m/Y "}}
-                                </td>
-                                <td>
-                                    {{reading.created_date|date:"H:i"}}
-                                </td>
-                                <td>
-                                    {{ reading.value|floatformat:2 }}
-                                </td>
-                            </tr>
-
-                            {% empty %}
-                            <tr>
-                                <td>No reading has been recorded by this sensor yet</td>
-                            </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                        {% if sensor.reading_set.all %}
-                            <a href="{% url 'export_readings_csv' pk=sensor.pk %}">Download ALL readings as CSV </a>
-                        {% endif %}
+                            <h5 title="Last 10 readings">Leituras mais recentes</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Hora</th>
+                                            <th>Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for reading in sensor.reading_set.all|slice:"0:10" %}
+                                        <tr>
+                                            <td>{{reading.created_date|date:"d/m/Y"}}</td>
+                                            <td>{{reading.created_date|date:"H:i"}}</td>
+                                            <td>{{reading.value|floatformat:2}}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="3">Nenhuma leitura gravada</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if sensor.reading_set.all %}
+                            <a href="{% url 'export_readings_csv' pk=sensor.pk %}">Baixe todas as leituras em um arquivo CSV </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {% empty %}
-            <p>Sorry, no sensor has been recorded for this {{ thing.type_of_thing.name }} yet. Please access the <a
-                    href="{% url 'admin:index' %}">admin</a> interface to add new sensors.</p>
-            {% endfor %}
+                {% empty %}
+                <p>Desculpe, nenhum sensor foi registrado para este sensor de {{ thing.type_of_thing.name }} ainda. Acesse a interface <a
+                        href="{% url 'admin:index' %}">admin</a> para adicionar novos sensores.</p>
+                {% endfor %}
+            </div>
         </div>
     </div>
-</div>
-{% endblock %}
+    {% endblock %}

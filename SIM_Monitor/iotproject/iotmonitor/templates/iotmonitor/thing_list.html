@@ -1,82 +1,90 @@
 {% extends 'iotmonitor/base.html' %}
+{% load static %}
 
 {% block content %}
 
-<div class="row">
-    <div class="col-md-8">
-        <!--	<h5>what's being monitored:</h5>-->
-        <div class="accordion" id="things-accordion">
-            {% for type in types %}
-            <div class="card">
-                <div class="card-header bg-info p-0" id="heading{{ type.id }}">
-                    <button class="btn btn-block text-left text-white" type="button" data-toggle="collapse"
+<!-- Font Awesome (se ainda não estiver no base.html) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<div class="container mt-4">
+    <h2 class="mb-4">
+        <i class="fas fa-layer-group text-info"></i> Tipos de Parâmetros Monitorados
+    </h2>
+
+    <div class="accordion" id="things-accordion">
+        {% for type in types %}
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-info text-white" id="heading{{ type.id }}">
+                <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                    <button class="btn btn-link text-white text-left p-0" type="button" data-toggle="collapse"
                             data-target="#collapse{{ type.id }}" aria-expanded="true"
                             aria-controls="collapse{{ type.id }}">
-                        {{ type.name }} ( {{ type.things_count }} )
-                        <span aria-hidden="true" class="accordion-icon float-right"></span>
+                        <i class="fas fa-cube mr-2"></i>{{ type.name }} 
+                        <span class="badge badge-light ml-2">{{ type.things_count }}</span>
                     </button>
-                </div>
-                <div id="collapse{{ type.id }}" class="collapse show" aria-labelledby="heading{{ type.id }}"
-                     data-parent="#things-accordion">
-                    <div class="card-body">
-                        <p class="font-italic">{{ type.description }}</p>
-                        <ul class="">
-                            {% for thing in type.thing_set.all|dictsort:"name" %}
+                    <i class="fas fa-chevron-down"></i>
+                </h5>
+            </div>
+            <div id="collapse{{ type.id }}" class="collapse" aria-labelledby="heading{{ type.id }}" data-parent="#things-accordion">
+                <div class="card-body">
+                    <p class="text-muted font-italic mb-3">{{ type.description }}</p>
+                    <ul class="list-group">
+                        {% for thing in type.thing_set.all|dictsort:"name" %}
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
                             <div>
-                                <li class="">
-                                    <a href="{% url 'thing_detail' pk=thing.pk %}">
-                                        {{ thing.name }}
-                                    </a>
-                                    - {{ thing.description|truncatechars:150 }}
-                                </li>
+                                <a href="{% url 'thing_detail' pk=thing.pk %}" class="font-weight-bold text-info">
+                                    <i class="fas fa-microchip mr-1"></i>{{ thing.name }}
+                                </a>
+                                <div class="text-muted small">{{ thing.description|truncatechars:150 }}</div>
                             </div>
-                            {% empty %}
-                            <div class="font-italic">
-                                There's nothing of this type recorded in the database yet. In order to do so,
-                                please access the <a href="{% url 'admin:index' %}">admin</a> interface</p>
-                            </div>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">
+                            Nenhum item deste tipo foi registrado ainda. Acesse o <a href="{% url 'admin:index' %}">admin</a> para adicionar.
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
-            {% empty %}
+        </div>
+        {% empty %}
             {% if things_without_type|length <= 0 %}
-            <p>Sorry, nothing has been recorded in the database yet. Please access the <a
-                    href="{% url 'admin:index' %}">admin</a> interface</p>
+            <div class="alert alert-warning">Nenhum dispositivo foi registrado ainda. Acesse o <a href="{% url 'admin:index' %}">admin</a> para adicionar.</div>
             {% endif %}
-            {% endfor %}
+        {% endfor %}
 
-            {% if things_without_type|length > 0 %}
-            <div class="card">
-                <div class="card-header bg-info p-0" id="headingTypeless">
-                    <button class="btn btn-block text-left text-white" type="button" data-toggle="collapse"
+        {% if things_without_type|length > 0 %}
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-secondary text-white" id="headingTypeless">
+                <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                    <button class="btn btn-link text-white text-left p-0" type="button" data-toggle="collapse"
                             data-target="#collapseTypeless" aria-expanded="true"
                             aria-controls="collapseTypeless">
-                        Uncategorized things ( {{ things_without_type|length }} )
+                        <i class="fas fa-question-circle mr-2"></i> Não categorizados
+                        <span class="badge badge-light ml-2">{{ things_without_type|length }}</span>
                     </button>
-                </div>
-                <div id="collapseTypeless" class="collapse show" aria-labelledby="headingTypeless"
-                     data-parent="#things-accordion">
-                    <div class="card-body">
-                        <p class="font-italic">{{ type.description }}</p>
-                        <ul class="">
-                            {% for thing in things_without_type|dictsort:"name" %}
+                    <i class="fas fa-chevron-down"></i>
+                </h5>
+            </div>
+            <div id="collapseTypeless" class="collapse" aria-labelledby="headingTypeless" data-parent="#things-accordion">
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for thing in things_without_type|dictsort:"name" %}
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
                             <div>
-                                <li class="">
-                                    <a href="{% url 'thing_detail' pk=thing.pk %}">
-                                        {{ thing.name }}
-                                    </a>
-                                    - {{ thing.description|truncatechars:150 }}
-                                </li>
+                                <a href="{% url 'thing_detail' pk=thing.pk %}" class="font-weight-bold text-secondary">
+                                    <i class="fas fa-microchip mr-1"></i>{{ thing.name }}
+                                </a>
+                                <div class="text-muted small">{{ thing.description|truncatechars:150 }}</div>
                             </div>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
-            {% endif %}
         </div>
+        {% endif %}
     </div>
 </div>
+
 {% endblock %}

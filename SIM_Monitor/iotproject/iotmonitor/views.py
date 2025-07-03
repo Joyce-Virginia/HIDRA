@@ -46,6 +46,10 @@ timezone_decorator = decorator_from_middleware(TimezonesMiddleware)
 def thing_detail(request, pk):
     thing = Thing.objects.get(pk=pk)
     sensors = thing.sensor_set.all().order_by('name')
+
+    for sensor in sensors:
+        sensor.latest_30_readings = sensor.reading_set.all().order_by('-created_date')[:30]
+
     return render(request, 'iotmonitor/thing_detail.html',
                   {'thing': thing, 'sensors': sensors})
 
