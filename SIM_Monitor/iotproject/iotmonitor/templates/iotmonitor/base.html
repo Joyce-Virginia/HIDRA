@@ -1,62 +1,129 @@
 {% load static %}
-<html lang="en">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>{% block title %}HIDRA - Hardware Integrado de Diagnóstico e Registro Ambiental{% endblock %}</title>
+    <meta name="description" content="Sistema de monitoramento IoT HIDRA">
+    <meta name="keywords" content="IoT, monitoramento, ambiental, HIDRA">
 
-    <link rel="stylesheet" href="{% static 'iotmonitor/lib/bootstrap.min.css' %}">
+    <!-- Favicons -->
     <link rel="shortcut icon" type="image/png" href="{% static 'iotmonitor/Hidra_logo.ico' %}" />
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="{% static 'iotmonitor/lib/bootstrap.min.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'iotmonitor/assets/css/base.css' %}">
+    {% block extra_css %}{% endblock %}
 
     {% block extra_head %}{% endblock %}
-
-    <style>
-        html {
-            overflow: -moz-scrollbars-vertical;
-            overflow-y: scroll;
-        }
-
-        .container {
-            padding: 40px 15px;
-        }
-
-        [data-toggle="collapse"] .accordion-icon:before {
-            content: "△";
-        }
-
-        [data-toggle="collapse"].collapsed .accordion-icon:before {
-            content: "▽";
-        }
-    </style>
 </head>
 
 <body>
-
     {% block header %}
-    <header>
-        <nav class="navbar navbar-dark" style="background-color: #052c53;">
-            <a class="navbar-brand" href="{% url 'thing_list' %}">HIDRA - SIMMonitor</a>
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin:index' %}">Admin</a>
-                </li>
-            </ul>
-        </nav>
+    <header id="header" class="header d-flex align-items-center sticky-top">
+        <div class="container-fluid container-xl position-relative d-flex align-items-center">
+            <a href="{% url 'thing_list' %}" class="logo d-flex align-items-center me-auto">
+                <h1 class="sitename">HIDRA</h1>
+            </a>
+
+            <nav id="navmenu" class="navmenu">
+                <ul>
+                    <li><a href="{% url 'thing_list' %}">Home</a></li>
+                    <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                </ul>
+                <i class="mobile-nav-toggle d-xl-none fas fa-bars"></i>
+            </nav>
+
+            <a class="btn-getstarted" href="{% url 'thing_list' %}">Dashboard</a>
+        </div>
     </header>
     {% endblock %}
 
-    <main role="main" class="flex-shrink-0">
-        <div class="content container">
-            {% block content %}{% endblock %}
-        </div>
+    <main class="main">
+        {% block content %}{% endblock %}
     </main>
 
+    {% block footer %}
+    <footer id="footer" class="footer">
+        <div class="container footer-top">
+            <div class="row gy-4">
+                <div class="col-lg-4 col-md-6 footer-about">
+                    <a href="{% url 'thing_list' %}" class="logo d-flex align-items-center">
+                        <h1 class="sitename">HIDRA</h1>
+                    </a>
+                    <div class="footer-contact pt-3">
+                        <p>Sistema de Monitoramento IoT</p>
+                        <p>Hardware Integrado de Diagnóstico e Registro Ambiental</p>
+                    </div>
+                    <div class="social-links d-flex mt-4">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="https://www.instagram.com/hidra.ufrpe/"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-3 footer-links">
+                    <h4>Links Úteis</h4>
+                    <ul>
+                        <li><a href="{% url 'thing_list' %}">Home</a></li>
+                        <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                        <li><a href="#">Sobre</a></li>
+                        <li><a href="#">Documentação</a></li>
+                        <li><a href="#">Suporte</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-3 footer-links">
+                    <h4>Funcionalidades</h4>
+                    <ul>
+                        <li><a href="#">Monitoramento</a></li>
+                        <li><a href="#">Relatórios</a></li>
+                        <li><a href="#">Alertas</a></li>
+                        <li><a href="#">Dashboard</a></li>
+                        <li><a href="#">API</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-4 col-md-12 footer-newsletter" style ="text-align: justify;">
+                    <h4>Sobre o HIDRA</h4>
+                    <p>Sistema completo de monitoramento IoT para coleta e análise de dados dos canais a céu aberto na
+                    Região Metropolitana do Recife.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container copyright text-center mt-4">
+            <p>© <span>Copyright</span> <strong class="px-1 sitename">HIDRA</strong> <span>Todos os Direitos Reservados</span></p>
+            <div class="credits">
+                Sistema de Monitoramento IoT
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <!-- Scroll Top -->
+    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <!-- JavaScript Files -->
     <script src="{% static 'js/awesome_django_timezones.js' %}"></script>
     <script src="{% static 'iotmonitor/lib/jquery-3.5.1.slim.min.js' %}" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
     <script src="{% static 'iotmonitor/lib/bootstrap.min.js' %}" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{% static 'iotmonitor/assets/js/base.js' %}"></script>
     {% block extra_scripts %}{% endblock %}
-
 </body>
 </html>
