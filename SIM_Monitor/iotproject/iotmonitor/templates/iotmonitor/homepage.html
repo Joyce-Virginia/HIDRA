@@ -6,7 +6,7 @@
 {% block header %}
 <header id="header" class="header d-flex align-items-center sticky-top" style="padding: 10px 0;">
     <div class="container-fluid container-xl position-relative d-flex align-items-center">
-        <a href="{% url 'thing_list' %}" class="logo d-flex align-items-center me-auto">
+        <a href="{% url 'homepage' %}" class="logo d-flex align-items-center me-auto">
             <h1 class="sitename">HIDRA</h1>
         </a>
 
@@ -24,6 +24,8 @@
             <a class="btn btn-outline-light" href="{% url 'login' %}">Login</a>
             <a class="btn btn-outline-light" href="{% url 'cadastro' %}">Cadastre-se</a>
         </div>
+
+        <a class="btn-getstarted" href="{% url 'dashboard' %}">Dashboard</a>
     </div>
 </header>
 {% endblock %}
@@ -58,7 +60,7 @@
 
                     <h3 style="color: white;">Monitoramento e análises inteligentes<br><br></h3>
 
-                    <a class="btn-getstarted" href="{% url 'thing_list' %}">Visualizar Dashboard</a>
+                    <a class="btn-getstarted" href="{% url 'dashboard' %}">Visualizar Dashboard</a>
                 </div>
             </div>
         </div>
@@ -225,7 +227,8 @@
 </section>
 
 <!-- Partners Section -->
-<section id="partners" class="section"
+ <!--
+ <section id="partners" class="section"
     style="background: linear-gradient(135deg, #052c53 0%, #007bff 100%); color: white;">
     <div class="container">
         <div class="section-header text-center mb-5">
@@ -233,11 +236,14 @@
             <p style="color: rgba(255,255,255,0.8);">Conheça os parceiros que apoiam e colaboram com o HIDRA.</p>
         </div>
     </div>
+    -->
 
 
     <!-- Swiper -->
 
-</section>
+<!-- </section>
+
+    -->
 
 {% load static %}
 

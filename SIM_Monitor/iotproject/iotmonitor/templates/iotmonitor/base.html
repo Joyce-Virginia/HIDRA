@@ -32,19 +32,19 @@
     {% block header %}
     <header id="header" class="header d-flex align-items-center sticky-top">
         <div class="container-fluid container-xl position-relative d-flex align-items-center">
-            <a href="{% url 'thing_list' %}" class="logo d-flex align-items-center me-auto">
+            <a href="{% url 'homepage' %}" class="logo d-flex align-items-center me-auto">
                 <h1 class="sitename">HIDRA</h1>
             </a>
 
             <nav id="navmenu" class="navmenu">
                 <ul>
-                    <li><a href="{% url 'thing_list' %}">Home</a></li>
+                    <li><a href="{% url 'homepage' %}">Home</a></li>
                     <li><a href="{% url 'admin:index' %}">Admin</a></li>
                 </ul>
                 <i class="mobile-nav-toggle d-xl-none fas fa-bars"></i>
             </nav>
 
-            <a class="btn-getstarted" href="{% url 'thing_list' %}">Dashboard</a>
+            <a class="btn-getstarted" href="{% url 'dashboard' %}">Dashboard</a>
         </div>
     </header>
     {% endblock %}

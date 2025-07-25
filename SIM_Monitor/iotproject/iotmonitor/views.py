@@ -98,3 +98,5 @@ def export_readings_csv(request, pk):
 
     return response
 
+def dashboard(request):
+    return render(request, 'iotmonitor/dashboard.html')
