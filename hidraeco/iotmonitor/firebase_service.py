@@ -52,24 +52,20 @@ class FirebaseService:
                 firebase_admin.delete_app(firebase_admin.get_app())
 
             cred = None
-            # 1. Tenta carregar a partir da variável de ambiente (para a Render)
             if hasattr(settings, 'FIREBASE_CREDENTIALS_JSON') and settings.FIREBASE_CREDENTIALS_JSON:
-                firebase_logger.info("A carregar credenciais a partir da variável de ambiente JSON.")
                 cred_dict = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
                 cred = credentials.Certificate(cred_dict)
-            
-            # 2. Se não conseguir, tenta carregar a partir de um ficheiro (para o seu PC local)
             elif hasattr(settings, 'FIREBASE_CREDENTIALS_PATH') and settings.FIREBASE_CREDENTIALS_PATH:
                 cred_path = settings.FIREBASE_CREDENTIALS_PATH
+                if not os.path.exists(cred_path):
+                    cred_path = os.path.join(settings.BASE_DIR, os.path.basename(cred_path))
                 if os.path.exists(cred_path):
-                    firebase_logger.info(f"A carregar credenciais do ficheiro: {cred_path}")
                     cred = credentials.Certificate(cred_path)
+                else:
+                    raise FileNotFoundError(f"Arquivo de credenciais não encontrado: {cred_path}")
+            else:
+                raise ValueError("Nenhuma configuração de credenciais Firebase encontrada")
 
-            # 3. Se nenhuma das opções funcionar, lança um erro
-            if not cred:
-                raise ValueError("Nenhuma configuração de credenciais Firebase (JSON ou PATH) foi encontrada.")
-
-            # Inicializa a app com as credenciais encontradas
             self.app = firebase_admin.initialize_app(cred, {
                 'databaseURL': settings.FIREBASE_DATABASE_URL,
                 'storageBucket': settings.FIREBASE_STORAGE_BUCKET
@@ -78,7 +74,6 @@ class FirebaseService:
             
             self.db_ref = db.reference('/')
             self.initialized = True
-
         except Exception as e:
             firebase_logger.error(f"Erro ao inicializar Firebase: {e}", exc_info=True)
             self.initialized = False
@@ -278,7 +273,7 @@ class FirebaseService:
                 firebase_logger.debug("Histórico de leituras obtido do cache.")
                 return cached_data
 
-            leituras_ref = self.db_ref.child('leituras')
+            leituras_ref = self.db_ref.child('values')
             all_readings_raw = leituras_ref.order_by_key().get()
 
             if not all_readings_raw or not isinstance(all_readings_raw, dict):
