@@ -144,11 +144,11 @@ if not firebase_admin._apps:
                 f"Ficheiro de credenciais não encontrado localmente: {cred_path}")
 
     #  inicializa a aplicação Firebase com as credenciais carregadas
-    firebase_admin.initialize_app(cred, {
+    '''firebase_admin.initialize_app(cred, {
         'databaseURL': FIREBASE_DATABASE_URL,
         'storageBucket': FIREBASE_STORAGE_BUCKET
     })
-    print("Conexão com Firebase inicializada com sucesso.")
+    print("Conexão com Firebase inicializada com sucesso.")'''
 
 # ==============================================================================
 # TEMPLATES, I18N, STATICFILES
