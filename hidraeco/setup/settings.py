@@ -121,11 +121,11 @@ if not firebase_admin._apps:
         if firebase_credentials_json_str:
             cred_dict = json.loads(firebase_credentials_json_str)
             cred = credentials.Certificate(cred_dict)
-            firebase_admin.initialize_app(cred, {
+            '''firebase_admin.initialize_app(cred, {
             'databaseURL': FIREBASE_DATABASE_URL,
             'storageBucket': FIREBASE_STORAGE_BUCKET
             })
-            print("Conexão com Firebase inicializada com sucesso. Dentro do Render")
+            print("Conexão com Firebase inicializada com sucesso. Dentro do Render")'''
             
         
         else:
