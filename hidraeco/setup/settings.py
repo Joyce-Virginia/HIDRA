@@ -40,6 +40,7 @@ DEBUG = not IS_RENDER_ENV
 
 if IS_RENDER_ENV:
     print("A carregar configurações de PRODUÇÃO (Render)...")
+    FIREBASE_CREDENTIALS_JSON = os.environ.get('FIREBASE_CREDENTIALS')
 else:
     print("A carregar configurações de desenvolvimento (Local)...")
     FIREBASE_CREDENTIALS_PATH = BASE_DIR / \
