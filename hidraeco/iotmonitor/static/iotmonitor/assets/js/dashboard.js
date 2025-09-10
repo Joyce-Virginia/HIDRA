@@ -118,17 +118,17 @@ class HidraDashboard {
     }
 
     initMap() {
-        this.map = L.map('map').setView([-8.343516334550308, -34.94783081164153], 16);
+        this.map = L.map('map').setView([-8.294582306335398, -35.03037438742963], 20);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(this.map);
 
-        const sensorMarker = L.marker([-8.343516334550308, -34.94783081164153]).addTo(this.map);
+        const sensorMarker = L.marker([-8.294582306335398, -35.03037438742963]).addTo(this.map);
         sensorMarker.bindPopup(`
             <div class="sensor-popup">
                 <h5><b>Sensor de Qualidade da Água</b></h5>
-                <p><strong>Localização:</strong> Canal de Gaibu</p>
+                <p><strong>Localização:</strong> Canal da Cohab</p>
                 <p><strong>Status:</strong> <span class="status-online">Ativo</span></p>
                 <p><strong>Última atualização:</strong> <span id="map-popup-time">${new Date().toLocaleTimeString('pt-BR')}</span></p>
             </div>
@@ -206,6 +206,7 @@ class HidraDashboard {
             if (data.success) {
                 this.updateSensorCards(data.sensor_data);
                 this.updateStatusCards(data.iqa, data.flood_risk);
+                this.updatePhotoCard(data.latest_image_url);
                 this.updateLastUpdateTime(data.timestamp);
                 this.updateMapPopup();
                 console.log('Dashboard data updated successfully.');
@@ -217,15 +218,25 @@ class HidraDashboard {
         }
     }
     
+    
     updateSensorCards(sensorData) {
         Object.keys(sensorData).forEach(key => {
             const valueElement = document.querySelector(`[data-sensor-value="${key.toLowerCase()}"]`);
+            
+            // Verifica se o elemento HTML existe
             if (valueElement) {
+                // --- CORREÇÃO FINAL ---
+                // Agora, sensorData[key] é apenas o número (ex: 25.5), não mais um objeto.
+                // Esta linha agora funciona corretamente.
                 const value = sensorData[key];
-                valueElement.textContent = this.formatSensorValue(key, value);
-                
-                const cardElement = document.querySelector(`[data-sensor-card="${key.toLowerCase()}"]`);
-                this.updateSensorAlert(cardElement, key, value);
+
+                // Garante que o valor é um número antes de formatar
+                if (typeof value === 'number') {
+                    valueElement.textContent = this.formatSensorValue(key, value);
+                    
+                    const cardElement = document.querySelector(`[data-sensor-card="${key.toLowerCase()}"]`);
+                    this.updateSensorAlert(cardElement, key, value);
+                }
             }
         });
     }

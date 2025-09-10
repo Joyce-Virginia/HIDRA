@@ -39,6 +39,8 @@ FIREBASE_DATABASE_URL = os.environ.get(
     'https://hidra-eco-default-rtdb.firebaseio.com/'
 )
 
+FIREBASE_STORAGE_BUCKET = 'hidra-eco.firebasestorage.app'
+
 # True = Local X #False = Produção
 DEBUG = False
 

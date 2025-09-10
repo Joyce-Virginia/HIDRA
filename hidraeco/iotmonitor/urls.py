@@ -30,6 +30,6 @@ urlpatterns = [
     # Novas rotas para Firebase
     path('api/firebase-test/', views.firebase_test, name='firebase_test'),
     path('api/firebase-sync/', views.firebase_sync_data, name='firebase_sync'),
-    # --- ADICIONE ESTA NOVA ROTA PARA O HISTÓRICO ---
     path('api/historical_data/<str:sensor_parameter>/', views.historical_data_api, name='historical_data_api'),
+    path('api/leitura-com-imagem/', views.api_leitura_com_imagem, name='api_leitura_com_imagem'),
 ]

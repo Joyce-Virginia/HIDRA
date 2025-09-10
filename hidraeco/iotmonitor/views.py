@@ -1,27 +1,53 @@
 # views.py
+
 from django.shortcuts import render, redirect
+
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+
 from django.utils import timezone
+
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+
 from django.contrib.auth.models import User
+
 from django.contrib import messages
+
 from django.http import JsonResponse
+
 from django.views.decorators.csrf import csrf_exempt
+
 from django.contrib.auth.decorators import login_required
+
 from django.core.validators import validate_email
+
 from django.core.exceptions import ValidationError
+
 from django.core.cache import cache
+
 import json
+
 import logging
+
 from django.contrib.auth.decorators import login_required
+
 from django.views.decorators.http import require_http_methods
+
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
+
 from .utils import send_password_reset_email, validate_password_reset_token
+
 from django.conf import settings
+
 from .iqa_calculator import IQACalculator
+
 # Importar serviço Firebase
+
+from . import ml_predictor
+
 from .firebase_service import firebase_service, get_firebase_sensor_data, save_firebase_sensor_data, get_all_firebase_leituras
+
 from datetime import datetime
+
 
 # Configurar logging
 logger = logging.getLogger(__name__)
@@ -738,73 +764,86 @@ def get_flood_risk_assessment(valores_sensores):
     return risk_level, css_class
 
 
+def classify_iqa_from_value(iqa_valor):
+    """Função auxiliar para classificar o IQA e obter a classe CSS."""
+    if not isinstance(iqa_valor, (int, float)):
+        return 'Inválido', 'status-critical'
+    if iqa_valor > 80:  # Ajustado para IQA 0-100
+        return 'Ótima', 'status-excellent'
+    elif iqa_valor > 52:
+        return 'Boa', 'status-good'
+    elif iqa_valor > 37:
+        return 'Regular', 'status-warning'
+    elif iqa_valor > 20:
+        return 'Ruim', 'status-bad'
+    else:
+        return 'Péssima', 'status-critical'
+
+
+def get_flood_risk_assessment(valores_sensores):
+    """Avalia risco de enchente com logging."""
+    turbidez = valores_sensores.get('Turbidez', 0)
+    residuos = valores_sensores.get('Residuos', 0)
+    if turbidez > 50 or residuos > 400:
+        return "Risco Alto", "status-critical"
+    elif turbidez > 25 or residuos > 300:
+        return "Risco Moderado", "status-warning"
+    else:
+        return "Risco Baixo", "status-good"
+
+
 def dashboard(request):
     """
-    View principal do dashboard.
+    View principal do dashboard com cálculo de IQA via IA.
     """
-    logger.info(
-        f"Dashboard acessado por {request.user if request.user.is_authenticated else 'usuário anônimo'}")
-
     try:
-        # A função get_sensor_data agora é get_firebase_sensor_data e já retorna os dados formatados
         valores_sensores = get_firebase_sensor_data()
-        logger.debug("Dados dos sensores obtidos para dashboard")
-
-        # CORREÇÃO: Usando test_connection() no lugar de is_connected()
         firebase_connected = firebase_service.test_connection()
-
-        # CORREÇÃO: Definindo as variáveis que faltavam
-        data_source = 'firebase' if firebase_connected and valores_sensores else 'fallback'
         device_status = firebase_service.get_device_status("ESP32_SIMULATOR")
+        latest_image_url = firebase_service.get_latest_image_url()
+        data_source = 'firebase' if firebase_connected and valores_sensores else 'fallback'
+        data_age = 'desconhecido'  # Valor padrão
 
-        data_age = 'recente'
-        if valores_sensores and 'timestamp' in valores_sensores:
+        if valores_sensores and valores_sensores.get('timestamp'):
             try:
                 # O timestamp já vem no formato ISO
                 data_time_obj = datetime.fromisoformat(
                     valores_sensores['timestamp']).replace(tzinfo=None)
-                # Compara com o tempo atual (ingênuo)
-                if (datetime.now() - data_time_obj).total_seconds() > 300:
+
+                # Compara com o tempo atual
+                if (datetime.now() - data_time_obj).total_seconds() > 300:  # 5 minutos
                     data_age = 'antigo'
+                else:
+                    data_age = 'recente'
             except (ValueError, TypeError):
-                data_age = 'desconhecido'
+                # Se o timestamp tiver um formato inválido, mantém 'desconhecido'
+                pass
 
-        # Higieniza os dados para o cálculo do IQA
-        valores_seguros_para_iqa = _sanitize_sensor_values_for_iqa(
-            valores_sensores)
+        # Prepara o dicionário com os valores de entrada para o modelo
+        model_input = {
+            'condutividade': valores_sensores.get('Condutividade', 15.0),
+            'ph': valores_sensores.get('pH'),
+            'temperatura': valores_sensores.get('Temperatura'),
+            'turbidez': valores_sensores.get('Turbidez')
+        }
 
-        # --- CORREÇÃO 2: Adicionando log para depurar o IQA ---
-        logger.debug(
-            f"Valores enviados para o cálculo do IQA: {valores_seguros_para_iqa}")
+        # USA O MODELO DE IA PARA PREDIZER O IQA
+        iqa_valor = ml_predictor.predict_iqa_value(model_input)
+        classificacao, css_class = classify_iqa_from_value(iqa_valor)
 
-        calculator = IQACalculator()
-        iqa_valor, subindices = calculator.calcular_IQA(
-            valores_seguros_para_iqa)
-        classificacao, css_class = calculator.classificar_IQA(iqa_valor)
-        alertas = calculator.get_parametros_alertas(valores_sensores)
-
-        # Avaliar risco de enchente
         flood_risk, flood_css = get_flood_risk_assessment(valores_sensores)
 
         context = {
-            'sensor_data': {
-                'temperatura': valores_sensores.get('Temperatura'),
-                'ph': valores_sensores.get('pH'),
-                'oxigenio': valores_sensores.get('OD'),
-                'dbo': valores_sensores.get('DBO'),
-                'coliformes': valores_sensores.get('Coliformes'),
-                'nitrogenio': valores_sensores.get('NT'),
-                'fosforo': valores_sensores.get('FT'),
-                'turbidez': valores_sensores.get('Turbidez'),
-                'solidos': valores_sensores.get('Residuos')
-            },
+            # Passa todos os valores (reais + padrão)
+            'sensor_data': valores_sensores,
             'iqa': {'valor': round(iqa_valor, 2), 'classificacao': classificacao, 'css_class': css_class},
             'flood_risk': flood_risk,
+            'latest_image_url': latest_image_url,
             'last_update': timezone.now(),
             'firebase_connected': firebase_connected,
             'data_source': data_source,  # Variável agora definida
             'device_status': device_status,  # Variável agora definida
-            'data_age': data_age
+            'data_age': data_age,
         }
 
         if request.user.is_authenticated:
@@ -824,38 +863,37 @@ def dashboard(request):
 
     except Exception as e:
         logger.error(f"Erro crítico no dashboard: {e}", exc_info=True)
-        # Contexto de fallback...
         context = {
             'error_message': 'Erro ao carregar dados dos sensores',
             'sensor_data': {},
             'iqa': {'valor': 0, 'classificacao': 'Erro', 'css_class': 'status-critical'},
-            'firebase_connected': False,
         }
         return render(request, 'iotmonitor/dashboard.html', context)
 
 
 def dashboard_api(request):
     """
-    API endpoint para obter dados do dashboard.
+    API do dashboard com cálculo de IQA via IA.
     """
     try:
         valores_sensores = get_firebase_sensor_data()
-        firebase_connected = firebase_service.test_connection()
+        latest_image_url = firebase_service.get_latest_image_url()
 
-        # CORREÇÃO: Definindo a variável que faltava
-        device_status = firebase_service.get_device_status("ESP32_SIMULATOR")
+        model_input = {
+            'condutividade': valores_sensores.get('Condutividade', 15.0),
+            'ph': valores_sensores.get('pH'),
+            'temperatura': valores_sensores.get('Temperatura'),
+            'turbidez': valores_sensores.get('Turbidez')
+        }
 
-        calculator = IQACalculator()
-        iqa_valor, subindices = calculator.calcular_IQA(valores_sensores)
-        classificacao, css_class = calculator.classificar_IQA(iqa_valor)
-
+        # USA O MODELO DE IA PARA PREDIZER O IQA
+        iqa_valor = ml_predictor.predict_iqa_value(model_input)
+        classificacao, css_class = classify_iqa_from_value(iqa_valor)
         flood_risk, flood_css = get_flood_risk_assessment(valores_sensores)
+        device_status = firebase_service.get_device_status("ESP32_SIMULATOR")
 
         data = {
             'success': True,
-            'timestamp': timezone.now().isoformat(),
-            'firebase_connected': firebase_connected,
-            'data_source': 'firebase' if firebase_connected else 'fallback',
             'sensor_data': {
                 'temperatura': valores_sensores.get('Temperatura'),
                 'ph': valores_sensores.get('pH'),
@@ -869,11 +907,10 @@ def dashboard_api(request):
             },
             'iqa': {'valor': round(iqa_valor, 2), 'classificacao': classificacao, 'css_class': css_class},
             'flood_risk': {'level': flood_risk, 'css_class': flood_css},
-            'device_status': device_status  # Variável agora definida
+            'device_status': device_status,
+            'latest_image_url': latest_image_url
         }
-
         return JsonResponse(data)
-
     except Exception as e:
         logger.error(f"Erro na API do dashboard: {e}", exc_info=True)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -1019,6 +1056,7 @@ def firebase_sync_data(request):
             'error': str(e)
         }, status=500)
 
+
 def historical_data_api(request, sensor_parameter: str):
     """
     API que retorna dados históricos para um parâmetro de sensor específico.
@@ -1065,3 +1103,63 @@ def historical_data_api(request, sensor_parameter: str):
         'data': data_points
     }
     return JsonResponse(response_data)
+
+
+# --- NOVA VIEW PARA RECEBER DADOS E IMAGEM DO ESP32-CAM ---
+@csrf_exempt  # Essencial para permitir POSTs de dispositivos como o ESP32
+def api_leitura_com_imagem(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método não permitido'}, status=405)
+
+    try:
+        # 1. Pega os dados dos sensores (que virão como texto no corpo do POST)
+        sensor_data_str = request.POST.get('sensor_data')
+        if not sensor_data_str:
+            return JsonResponse({'success': False, 'error': 'Dados do sensor ausentes'}, status=400)
+
+        sensor_data = json.loads(sensor_data_str)
+
+        # 2. Pega a imagem, se ela foi enviada
+        imagem_file = request.FILES.get('image_file')
+        image_url = None
+
+        if imagem_file:
+            # Salva o arquivo temporariamente
+            temp_file_name = default_storage.save(
+                imagem_file.name, imagem_file)
+            temp_file_path = default_storage.path(temp_file_name)
+
+            # Cria um nome único para o arquivo no Storage usando o timestamp
+            timestamp_str = sensor_data.get(
+                'timestamp', datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+            destination_name = f'leituras/{timestamp_str}.jpg'
+
+            # 3. Faz o upload para o Firebase Storage
+            image_url = firebase_service.upload_image_to_storage(
+                temp_file_path, destination_name)
+
+            # Limpa o arquivo temporário
+            os.remove(temp_file_path)
+
+            if image_url:
+                # 4. Adiciona a URL da imagem aos dados do sensor
+                sensor_data['imageUrl'] = image_url
+            else:
+                logger.warning(
+                    "Falha ao fazer upload da imagem para o Storage.")
+
+        # 5. Salva o registro completo (com ou sem URL) no Realtime Database
+        # (Esta função será adicionada ao firebase_service.py a seguir)
+        success, leitura_id = firebase_service.save_leitura_to_rtdb(
+            sensor_data)
+
+        if success:
+            return JsonResponse({'success': True, 'message': 'Leitura recebida com sucesso', 'leitura_id': leitura_id})
+        else:
+            return JsonResponse({'success': False, 'error': 'Falha ao salvar no Realtime Database'}, status=500)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'JSON de dados do sensor inválido'}, status=400)
+    except Exception as e:
+        logger.error(f"Erro inesperado na API de leitura: {e}", exc_info=True)
+        return JsonResponse({'success': False, 'error': 'Erro interno do servidor'}, status=500)
