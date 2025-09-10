@@ -75,10 +75,34 @@ if DEBUG:
         "http://127.0.0.1:3000",
     ]
 
-    # Firebase - Desenvolvimento (usar arquivo local)
+    IS_RENDER_ENV = 'RENDER' in os.environ
+
+if IS_RENDER_ENV:
+    # --- Configuração para Produção (Render) ---
+    print("A carregar configurações de produção (Render)...")
+    FIREBASE_CREDENTIALS_PATH = None
+    
+    # --- CORREÇÃO AQUI ---
+    # Agora procura pelo nome correto da sua variável: 'FIREBASE_CREDENTIALS'
+    FIREBASE_CREDENTIALS_JSON = os.environ.get('FIREBASE_CREDENTIALS') 
+    
+    if FIREBASE_CREDENTIALS_JSON is None:
+        # Mensagem de erro também atualizada para clareza
+        raise ValueError("A variável de ambiente FIREBASE_CREDENTIALS não foi encontrada na Render.")
+
+else:
+    # --- Configuração para Desenvolvimento ---
+    # Localmente, continuamos a usar o ficheiro .json.
+    print("A carregar configurações de desenvolvimento (Local)...")
     FIREBASE_CREDENTIALS_PATH = BASE_DIR / \
         'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
     FIREBASE_CREDENTIALS_JSON = None
+
+    # Verificação para garantir que o ficheiro existe localmente
+    if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
+        raise FileNotFoundError(
+            f"O ficheiro de credenciais não foi encontrado em: {FIREBASE_CREDENTIALS_PATH}")
+
 
 else:
     # ========== CONFIGURAÇÕES DE PRODUÇÃO ==========
