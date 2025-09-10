@@ -12,9 +12,12 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+import dj_database_url
 import json
 import firebase_admin
 from firebase_admin import credentials
+
+
 # import dj_database_url
 
 
@@ -33,181 +36,35 @@ SECRET_KEY = 'django-insecure-s%5w70mp^bo0#9vc5pm2(s10pwinu*0$nle3nh88-a#sr87lj7
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 
-# URL do Firebase Realtime Database
-FIREBASE_DATABASE_URL = os.environ.get(
-    'FIREBASE_DATABASE_URL',
-    'https://hidra-eco-default-rtdb.firebaseio.com/'
-)
+# ==============================================================================
+# CONFIGURAÇÕES BASE
+# ==============================================================================
+BASE_DIR = Path(__file__).resolve().parent.parent
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-uma-chave-secreta-padrao-para-desenvolvimento')
+ROOT_URLCONF = 'setup.urls'
+WSGI_APPLICATION = 'setup.wsgi.application'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-FIREBASE_STORAGE_BUCKET = 'hidra-eco.firebasestorage.app'
-
-# True = Local X #False = Produção
-DEBUG = False
-
-# Configurações automáticas baseadas no DEBUG
-if DEBUG:
-    # ========== CONFIGURAÇÕES LOCAIS ==========
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
-    MIDDLEWARE = [
-        'django.middleware.security.SecurityMiddleware',
-        'django.contrib.sessions.middleware.SessionMiddleware',
-        'corsheaders.middleware.CorsMiddleware',
-        'django.middleware.common.CommonMiddleware',
-        'django.middleware.csrf.CsrfViewMiddleware',
-        'django.contrib.auth.middleware.AuthenticationMiddleware',
-        'django.contrib.messages.middleware.MessageMiddleware',
-        'django.middleware.clickjacking.XFrameOptionsMiddleware',
-        'iotmonitor.middleware.SecurityMiddleware',
-    ]
-
-    # Permitir CORS para ESP32 (apenas para desenvolvimento)
-    CORS_ALLOW_ALL_ORIGINS = True
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
-
-    IS_RENDER_ENV = 'RENDER' in os.environ
+# ==============================================================================
+# DETECÇÃO AUTOMÁTICA DE AMBIENTE (LOCAL vs. RENDER)
+# ==============================================================================
+IS_RENDER_ENV = 'RENDER' in os.environ
+DEBUG = not IS_RENDER_ENV
 
 if IS_RENDER_ENV:
-    # --- Configuração para Produção (Render) ---
-    print("A carregar configurações de produção (Render)...")
-    FIREBASE_CREDENTIALS_PATH = None
-    
-    # --- CORREÇÃO AQUI ---
-    # Agora procura pelo nome correto da sua variável: 'FIREBASE_CREDENTIALS'
-    FIREBASE_CREDENTIALS_JSON = os.environ.get('FIREBASE_CREDENTIALS') 
-    
-    if FIREBASE_CREDENTIALS_JSON is None:
-        # Mensagem de erro também atualizada para clareza
-        raise ValueError("A variável de ambiente FIREBASE_CREDENTIALS não foi encontrada na Render.")
-
+    print("A carregar configurações de PRODUÇÃO (Render)...")
 else:
-    # --- Configuração para Desenvolvimento ---
-    # Localmente, continuamos a usar o ficheiro .json.
-    print("A carregar configurações de desenvolvimento (Local)...")
-    FIREBASE_CREDENTIALS_PATH = BASE_DIR / \
-        'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
-    FIREBASE_CREDENTIALS_JSON = None
+    print("A carregar configurações de DESENVOLVIMENTO (Local)...")
 
-    # Verificação para garantir que o ficheiro existe localmente
-    if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
-        raise FileNotFoundError(
-            f"O ficheiro de credenciais não foi encontrado em: {FIREBASE_CREDENTIALS_PATH}")
-
-
+# ==============================================================================
+# CONFIGURAÇÕES DE APLICAÇÃO E SEGURANÇA
+# ==============================================================================
+ALLOWED_HOSTS = []
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 else:
-    # ========== CONFIGURAÇÕES DE PRODUÇÃO ==========
-    import dj_database_url
-
-    ALLOWED_HOSTS = ['hidra-eco.com.br',
-                     'www.hidra-eco.com.br', 'hidra-eco.onrender.com']
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
-    MIDDLEWARE = [
-        'django.middleware.security.SecurityMiddleware',
-        # Para servir arquivos estáticos em produção
-        'whitenoise.middleware.WhiteNoiseMiddleware',
-        'corsheaders.middleware.CorsMiddleware',
-        'django.contrib.sessions.middleware.SessionMiddleware',
-        'django.middleware.common.CommonMiddleware',
-        'django.middleware.csrf.CsrfViewMiddleware',
-        'django.contrib.auth.middleware.AuthenticationMiddleware',
-        'django.contrib.messages.middleware.MessageMiddleware',
-        'django.middleware.clickjacking.XFrameOptionsMiddleware',
-        'iotmonitor.middleware.SecurityMiddleware',
-    ]
-
-    # ========== CONFIGURAÇÕES CORS PARA PRODUÇÃO ==========
-    CORS_ALLOWED_ORIGINS = [
-        "https://hidra-eco.com.br",
-        "https://www.hidra-eco.com.br",
-        "https://hidra-eco.onrender.com",
-    ]
-
-    # Permitir headers necessários para ESP32
-    CORS_ALLOW_HEADERS = [
-        'accept',
-        'accept-encoding',
-        'authorization',
-        'content-type',
-        'dnt',
-        'origin',
-        'user-agent',
-        'x-csrftoken',
-        'x-requested-with',
-    ]
-
-    # Permitir métodos necessários
-    CORS_ALLOWED_METHODS = [
-        'DELETE',
-        'GET',
-        'OPTIONS',
-        'PATCH',
-        'POST',
-        'PUT',
-    ]
-
-    # Firebase - Produção (usar variável de ambiente)
-    FIREBASE_CREDENTIALS_PATH = None
-    FIREBASE_CREDENTIALS_JSON = os.environ.get('FIREBASE_CREDENTIALS_JSON')
-
-    # Configurações de segurança HTTPS
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-
-    # Configuração para arquivos estáticos em produção
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-
-# ========== CONFIGURAÇÃO ESPECIAL PARA APIs DO ESP32 ==========
-# ==================== CSRF PARA APIs DO ESP32 ====================
-CSRF_TRUSTED_ORIGINS = [
-    "https://hidra-eco.com.br",
-    "https://www.hidra-eco.com.br",
-    "https://hidra-eco.onrender.com",
-]
-
-if DEBUG:
-    CSRF_TRUSTED_ORIGINS.extend([
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ])
-
-########## ########## ########## ########## ########## ########## CONFIGURAR ########## ########## ########## ########## ########## ##########
-
-############################## LOCAL ##############################
-'''ALLOWED_HOSTS = [] '''
-############################## LOCAL ##############################
-
-############################## PRODUÇÃO ##############################
-'''
-ALLOWED_HOSTS = ['hidra-eco.com.br','www.hidra-eco.com.br','hidra-eco.onrender.com'] #Produção
-'''
-############################## PRODUÇÃO ##############################
-
-########## ########## ########## ########## ########## ########## CONFIGURAR ########## ########## ########## ########## ########## ##########
-
-
-# Application definition
+    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -220,32 +77,78 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
-'''MIDDLEWARE = [
+MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    ############################## PRODUÇÃO ##############################
-
-    #'whitenoise.middleware.WhiteNoiseMiddleware', 
-
-    ############################## PRODUÇÃO ##############################
-
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'iotmonitor.middleware.SecurityMiddleware', 
-]'''
+]
 
-ROOT_URLCONF = 'setup.urls'
+# ==============================================================================
+# BANCO DE DADOS (DATABASE)
+# ==============================================================================
+if IS_RENDER_ENV:
+    # Em produção (Render), usa a variável de ambiente DATABASE_URL com Neon, etc.
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True # Essencial para a maioria dos bancos de dados em nuvem
+        )
+    }
+else:
+    # Localmente, usa um ficheiro SQLite simples
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
+# ==============================================================================
+# FIREBASE
+# ==============================================================================
+FIREBASE_DATABASE_URL = 'https://hidra-eco-default-rtdb.firebaseio.com'
+FIREBASE_STORAGE_BUCKET = 'hidra-eco-default-rtdb.appspot.com'
+
+if not firebase_admin._apps:
+    cred = None
+    if IS_RENDER_ENV:
+        # Na Render, carrega a partir da variável de ambiente
+        firebase_credentials_json = os.environ.get('FIREBASE_CREDENTIALS')
+        if firebase_credentials_json:
+            cred_dict = json.loads(firebase_credentials_json)
+            cred = credentials.Certificate(cred_dict)
+        else:
+            raise ValueError("A variável de ambiente FIREBASE_CREDENTIALS não foi configurada na Render.")
+    else:
+        # Localmente, carrega a partir do ficheiro
+        cred_path = BASE_DIR / 'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
+        if os.path.exists(cred_path):
+            cred = credentials.Certificate(cred_path)
+        else:
+            raise FileNotFoundError(f"Ficheiro de credenciais não encontrado localmente: {cred_path}")
+    
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': FIREBASE_DATABASE_URL,
+        'storageBucket': FIREBASE_STORAGE_BUCKET
+    })
+    print("Conexão com Firebase inicializada com sucesso.")
+
+# ==============================================================================
+# TEMPLATES, I18N, STATICFILES
+# ==============================================================================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [], 'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -253,374 +156,35 @@ TEMPLATES = [
         },
     },
 ]
-
-WSGI_APPLICATION = 'setup.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-########## ########## ########## ########## ########## ########## CONFIGURAR ########## ########## ########## ########## ########## ##########
-
-############################## PRODUÇÃO ##############################
-'''DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3')
-    )
-}'''
-############################## PRODUÇÃO ##############################
-
-############################## LOCAL ##############################
-'''DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}'''
-############################## LOCAL ##############################
-
-########## ########## ########## ########## ########## ########## CONFIGURAR ########## ########## ########## ########## ########## ##########
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-'''
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-'''
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'pt-br'
-
 TIME_ZONE = 'America/Recife'
-
 USE_I18N = True
-
 USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-########## ########## ########## ########## ########## ########## CONFIGURAR ########## ########## ########## ########## ########## ##########
-
-############################## PRODUÇÃO ##############################
-
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-############################## PRODUÇÃO ##############################
-
-########## ########## ########## ########## ########## ########## CONFIGURAR ########## ########## ########## ########## ########## ##########
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+# ==============================================================================
+# REDIRECIONAMENTOS E CORS
+# ==============================================================================
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
 
-# Configurações de segurança para sessões e cookies
-if DEBUG:
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
+if IS_RENDER_ENV:
+    CORS_ALLOWED_ORIGINS = [
+        f"https://{RENDER_EXTERNAL_HOSTNAME}",
+    ]
 else:
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    CORS_ALLOW_ALL_ORIGINS = True
 
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax'
-
-# Configurações de senha
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 8,
-        }
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-# ==================== CONFIGURAÇÕES DE EMAIL ====================
+# ==============================================================================
+# CONFIGURAÇÕES DE EMAIL (Mantidas como no seu original)
+# ==============================================================================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'hidrateams@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get(
-    'EMAIL_HOST_PASSWORD', 'qyhc pbkd nbgp wpbf')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'qyhc pbkd nbgp wpbf')
 DEFAULT_FROM_EMAIL = f'HIDRA <{EMAIL_HOST_USER}>'
-
-# ==================== CONFIGURAÇÕES DE CACHE ====================
-# Cache para dados dos sensores e Firebase
-if DEBUG:
-    # Cache em memória para desenvolvimento
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'sensor-data-cache',
-            'TIMEOUT': 300,  # 5 minutos
-            'OPTIONS': {
-                'MAX_ENTRIES': 1000,
-            }
-        }
-    }
-else:
-    # Cache Redis para produção (se disponível)
-    REDIS_URL = os.environ.get('REDIS_URL')
-    if REDIS_URL:
-        CACHES = {
-            'default': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': REDIS_URL,
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                }
-            }
-        }
-    else:
-        # Fallback para cache em memória
-        CACHES = {
-            'default': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                'LOCATION': 'sensor-data-cache',
-                'TIMEOUT': 300,
-                'OPTIONS': {
-                    'MAX_ENTRIES': 1000,
-                }
-            }
-        }
-
-
-# ==================== CONFIGURAÇÕES DE LOGGING ====================
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '[{levelname}] {asctime} | {name} | {module}.{funcName}:{lineno} | {message}',
-            'style': '{',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        },
-        'simple': {
-            'format': '[{levelname}] {asctime} | {message}',
-            'style': '{',
-            'datefmt': '%H:%M:%S',
-        },
-        'firebase_format': {
-            'format': '[FIREBASE] {asctime} | {levelname} | {message}',
-            'style': '{',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-        'django_file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'django.log',
-            'maxBytes': 5 * 1024 * 1024,  # 5MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'firebase_file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'firebase.log',
-            'maxBytes': 10 * 1024 * 1024,  # 10MB
-            'backupCount': 10,
-            'formatter': 'firebase_format',
-        },
-        'sensor_file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'sensors.log',
-            'maxBytes': 10 * 1024 * 1024,  # 10MB
-            'backupCount': 10,
-            'formatter': 'verbose',
-        },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'errors.log',
-            'maxBytes': 5 * 1024 * 1024,  # 5MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'esp_data_file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'esp_data.log',
-            'maxBytes': 20 * 1024 * 1024,  # 20MB
-            'backupCount': 15,
-            'formatter': 'verbose',
-        },
-        'alerts_file': {
-            'level': 'WARNING',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': LOGS_DIR / 'alerts.log',
-            'maxBytes': 5 * 1024 * 1024,  # 5MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'django_file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['console', 'error_file'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'iotmonitor': {
-            'handlers': ['console', 'sensor_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'propagate': True,
-        },
-        'firebase': {
-            'handlers': ['console', 'firebase_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'sensors': {
-            'handlers': ['console', 'esp_data_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'alerts': {
-            'handlers': ['console', 'alerts_file'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-        'iqa': {
-            'handlers': ['console', 'sensor_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'esp_connection': {
-            'handlers': ['console', 'esp_data_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'propagate': False,
-        },
-    },
-    'root': {
-        'level': 'INFO',
-        'handlers': ['console', 'error_file'],
-    },
-}
-
-# Configurações de email (para recuperação de senha)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # ou seu provedor de email
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'hidrateams@gmail.com'
-EMAIL_HOST_PASSWORD = 'qyhc pbkd nbgp wpbf'
-DEFAULT_FROM_EMAIL = 'HIDRA <hidrateams@gmail.com>'
-
-# ==================== CONFIGURAÇÕES DE CACHE ====================
-if DEBUG:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'sensor-data-cache',
-            'TIMEOUT': 300,  # 5 minutos
-            'OPTIONS': {
-                'MAX_ENTRIES': 1000,
-            }
-        }
-    }
-else:
-    # Tentar usar Redis em produção se disponível
-    REDIS_URL = os.environ.get('REDIS_URL')
-    if REDIS_URL:
-        CACHES = {
-            'default': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': REDIS_URL,
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                }
-            }
-        }
-    else:
-        # Fallback para cache em memória
-        CACHES = {
-            'default': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                'LOCATION': 'sensor-data-cache',
-                'TIMEOUT': 300,
-                'OPTIONS': {
-                    'MAX_ENTRIES': 1000,
-                }
-            }
-        }
-
-
-# Configuração do Firebase
-if not firebase_admin._apps:
-    if os.getenv('FIREBASE_CREDENTIALS'):
-        # Produção - usando variável de ambiente no Render
-        firebase_credentials = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
-        cred = credentials.Certificate(firebase_credentials)
-    else:
-        # Desenvolvimento - usando arquivo local
-        cred = credentials.Certificate(
-            'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json')
-
-    firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://hidra-eco-default-rtdb.firebaseio.com/'
-    })
-
-# Configuração do Firebase Realtime Database
-FIREBASE_DATABASE_URL = 'https://hidra-eco-default-rtdb.firebaseio.com/'
-
-# ==================== CONFIGURAÇÕES ESPECÍFICAS PARA ESP32 ====================
-# Timeout para requisições dos sensores
-SENSOR_REQUEST_TIMEOUT = 30  # segundos
-
-# Intervalo mínimo entre leituras dos sensores (para evitar spam)
-SENSOR_MIN_INTERVAL = 10  # segundos
-
-# Número máximo de tentativas de reconexão Firebase
-FIREBASE_MAX_RETRIES = 3
-
-# Tempo de cache para dados dos sensores
-SENSOR_CACHE_TIMEOUT = 60  # 1 minuto
