@@ -134,48 +134,21 @@ class FirebaseService:
                 f"Erro ao obter a última leitura do Firebase: {e}", exc_info=True)
             return None
 
-    def _convert_raw_temp_to_celsius(self, raw_adc: float) -> float:
-        """
-        Converte o valor cru do ADC do sensor de temperatura para graus Celsius.
-        """
-        # Adiciona uma verificação para valores fora da faixa esperada (0-4095)
-        if not (0 < raw_adc < 4095):
-            logger.warning(
-                f"Valor de ADC da temperatura ('{raw_adc}') está fora da faixa válida. Retornando 25.0°C.")
-            return 25.0
-
-        try:
-            B = 3950
-            R0 = 10000
-            T0 = 298.15
-
-            VOUT = raw_adc * (3.3 / 4095.0)
-            R = (10000 * VOUT) / (3.3 - VOUT)
-
-            inv_T = (1.0 / T0) + (1.0 / B) * math.log(R / R0)
-            temp_kelvin = 1.0 / inv_T
-            temp_celsius = temp_kelvin - 273.15
-
-            return round(temp_celsius, 2)
-        except (ValueError, ZeroDivisionError) as e:
-            logger.warning(
-                f"Não foi possível converter a temperatura crua '{raw_adc}': {e}. Retornando 25.0°C.")
-            return 25.0  # Retorna um valor padrão seguro
-
+    
     def _format_leitura_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Formata dados, converte temperatura e usa valores padrão para campos ausentes.
         """
         try:
-            # 1. Converte a temperatura
-            raw_temp = float(raw_data.get('temperatura', 4095))
-            temp_celsius = self._convert_raw_temp_to_celsius(raw_temp)
+            # 1. Pega o valor da temperatura diretamente, sem conversão.
+            temp_celsius = float(raw_data.get('temperatura', 25.0)) # 25.0 como padrão
 
-            # 2. Pega os valores conhecidos do Firebase
+            # 2. Prepara o dicionário de valores conhecidos
             known_values = {
                 'Temperatura': temp_celsius,
                 'pH': float(raw_data.get('ph', 7.0)),
                 'Turbidez': float(raw_data.get('turbidez', 0.0)),
+                'Condutividade': float(raw_data.get('condutividade', 15.0)) 
             }
 
             # 3. Pega e formata o timestamp
@@ -192,6 +165,7 @@ class FirebaseService:
                 'Temperatura': known_values['Temperatura'],
                 'pH': known_values['pH'],
                 'Turbidez': known_values['Turbidez'],
+                'Condutividade': known_values['Condutividade'],
 
                 # Usando valores padrão seguros para os campos ausentes
                 'OD': 7.5,
