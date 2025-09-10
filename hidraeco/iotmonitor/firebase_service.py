@@ -43,39 +43,50 @@ class FirebaseService:
 
     def _initialize_firebase(self):
         """
-        Inicializa a conexão com o Firebase, forçando a recriação da app se ela
-        já existir, para garantir que as configurações corretas sejam sempre carregadas.
+        Inicializa a conexão com o Firebase de forma robusta, funcionando
+        tanto na Render (variável de ambiente) quanto localmente (ficheiro).
         """
         try:
-            if firebase_admin._apps:
-                firebase_logger.warning("App Firebase já existe. Deletando para garantir reconfiguração completa...")
-                firebase_admin.delete_app(firebase_admin.get_app())
+            '''if firebase_admin._apps:
+                firebase_logger.warning(
+                    "App Firebase já existe. Deletando para garantir reconfiguração completa...")
+                firebase_admin.delete_app(firebase_admin.get_app())'''
 
             cred = None
+            # 1. Tenta carregar a partir da variável de ambiente (para a Render)
             if hasattr(settings, 'FIREBASE_CREDENTIALS_JSON') and settings.FIREBASE_CREDENTIALS_JSON:
+                firebase_logger.info(
+                    "A carregar credenciais a partir da variável de ambiente JSON.")
                 cred_dict = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
                 cred = credentials.Certificate(cred_dict)
+
+            # 2. Se não conseguir, tenta carregar a partir de um ficheiro (para o seu PC local)
             elif hasattr(settings, 'FIREBASE_CREDENTIALS_PATH') and settings.FIREBASE_CREDENTIALS_PATH:
                 cred_path = settings.FIREBASE_CREDENTIALS_PATH
-                if not os.path.exists(cred_path):
-                    cred_path = os.path.join(settings.BASE_DIR, os.path.basename(cred_path))
                 if os.path.exists(cred_path):
+                    firebase_logger.info(
+                        f"A carregar credenciais do ficheiro: {cred_path}")
                     cred = credentials.Certificate(cred_path)
-                else:
-                    raise FileNotFoundError(f"Arquivo de credenciais não encontrado: {cred_path}")
-            else:
-                raise ValueError("Nenhuma configuração de credenciais Firebase encontrada")
 
+            # 3. Se nenhuma das opções funcionar, lança um erro
+            if not cred:
+                raise ValueError(
+                    "Nenhuma configuração de credenciais Firebase (JSON ou PATH) foi encontrada.")
+
+            # Inicializa a app com as credenciais encontradas
             self.app = firebase_admin.initialize_app(cred, {
                 'databaseURL': settings.FIREBASE_DATABASE_URL,
                 'storageBucket': settings.FIREBASE_STORAGE_BUCKET
             })
-            firebase_logger.info(f"Firebase inicializado com sucesso. Bucket: {settings.FIREBASE_STORAGE_BUCKET}")
-            
+            firebase_logger.info(
+                f"Firebase inicializado com sucesso. Bucket: {settings.FIREBASE_STORAGE_BUCKET}")
+
             self.db_ref = db.reference('/')
             self.initialized = True
+
         except Exception as e:
-            firebase_logger.error(f"Erro ao inicializar Firebase: {e}", exc_info=True)
+            firebase_logger.error(
+                f"Erro ao inicializar Firebase: {e}", exc_info=True)
             self.initialized = False
 
     def test_connection(self) -> bool:
@@ -94,6 +105,7 @@ class FirebaseService:
         """
         Obtém a leitura mais recente do nó /leituras de forma segura.
         """
+
         if not self.initialized:
             firebase_logger.warning(
                 "Firebase não inicializado, impossível buscar leituras.")
@@ -372,21 +384,25 @@ class FirebaseService:
         Busca no Firebase Storage pela imagem mais recente na RAIZ do bucket
         e retorna sua URL pública (SEM CACHE).
         """
-        logger.info("--- Iniciando busca pela imagem mais recente no Storage (na raiz) ---")
+        logger.info(
+            "--- Iniciando busca pela imagem mais recente no Storage (na raiz) ---")
 
         if not self.initialized:
-            logger.warning("Firebase não inicializado, impossível buscar imagem.")
+            logger.warning(
+                "Firebase não inicializado, impossível buscar imagem.")
             return None
-        
+
         try:
             bucket_name = self.app.options.get('storageBucket')
             if not bucket_name:
-                logger.error("Bucket ID do Storage não encontrado na configuração do Firebase.")
+                logger.error(
+                    "Bucket ID do Storage não encontrado na configuração do Firebase.")
                 return None
-            
+
             bucket = storage.bucket(bucket_name)
-            
-            logger.info(f"Buscando arquivos na raiz do bucket '{bucket_name}'...")
+
+            logger.info(
+                f"Buscando arquivos na raiz do bucket '{bucket_name}'...")
             blobs = list(bucket.list_blobs())
 
             if not blobs:
@@ -394,18 +410,20 @@ class FirebaseService:
                 return None
 
             latest_blob = max(blobs, key=lambda b: b.name)
-            
-            logger.info(f"Arquivo determinado como o mais recente: '{latest_blob.name}'")
-            
+
+            logger.info(
+                f"Arquivo determinado como o mais recente: '{latest_blob.name}'")
+
             latest_blob.make_public()
             public_url = latest_blob.public_url
-            
+
             logger.info(f"URL pública gerada: {public_url}")
-            
+
             return public_url
 
         except Exception as e:
-            logger.error(f"Erro ao buscar imagem mais recente do Storage: {e}", exc_info=True)
+            logger.error(
+                f"Erro ao buscar imagem mais recente do Storage: {e}", exc_info=True)
             return None
 
 

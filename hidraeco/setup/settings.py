@@ -138,6 +138,11 @@ if not firebase_admin._apps:
         cred_path = BASE_DIR / 'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
         if os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred, {
+            'databaseURL': FIREBASE_DATABASE_URL,
+            'storageBucket': FIREBASE_STORAGE_BUCKET
+            })
+            print("Conexão com Firebase inicializada com sucesso. Dentro do Local")
         else:
             # Esta verificação pára o servidor local se o ficheiro não for encontrado
             raise FileNotFoundError(
