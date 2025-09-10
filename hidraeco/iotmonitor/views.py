@@ -804,20 +804,19 @@ def dashboard(request):
         data_source = 'firebase' if firebase_connected and valores_sensores else 'fallback'
         data_age = 'desconhecido'  # Valor padrão
 
-        if valores_sensores and valores_sensores.get('timestamp'):
+        sensor_timestamp_str = valores_sensores.get('timestamp')
+        last_update_obj = timezone.now() # Valor padrão
+        if sensor_timestamp_str:
             try:
-                # O timestamp já vem no formato ISO
-                data_time_obj = datetime.fromisoformat(
-                    valores_sensores['timestamp']).replace(tzinfo=None)
-
-                # Compara com o tempo atual
-                if (datetime.now() - data_time_obj).total_seconds() > 300:  # 5 minutos
-                    data_age = 'antigo'
-                else:
-                    data_age = 'recente'
+                last_update_obj = datetime.fromisoformat(sensor_timestamp_str)
             except (ValueError, TypeError):
-                # Se o timestamp tiver um formato inválido, mantém 'desconhecido'
-                pass
+                logger.warning(f"Não foi possível converter o timestamp '{sensor_timestamp_str}' para data.")
+
+        # Lógica para data_age (opcional, pode ser baseada no mesmo objeto)
+        if (timezone.now().replace(tzinfo=None) - last_update_obj.replace(tzinfo=None)).total_seconds() > 300:
+            data_age = 'antigo'
+        else:
+            data_age = 'recente'
 
         # Prepara o dicionário com os valores de entrada para o modelo
         model_input = {
@@ -839,7 +838,7 @@ def dashboard(request):
             'iqa': {'valor': round(iqa_valor, 2), 'classificacao': classificacao, 'css_class': css_class},
             'flood_risk': flood_risk,
             'latest_image_url': latest_image_url,
-            'last_update': timezone.now(),
+            'last_update': last_update_obj,
             'firebase_connected': firebase_connected,
             'data_source': data_source,  # Variável agora definida
             'device_status': device_status,  # Variável agora definida
@@ -894,6 +893,7 @@ def dashboard_api(request):
 
         data = {
             'success': True,
+            'timestamp': valores_sensores.get('timestamp'),
             'sensor_data': {
                 'temperatura': valores_sensores.get('Temperatura'),
                 'ph': valores_sensores.get('pH'),
