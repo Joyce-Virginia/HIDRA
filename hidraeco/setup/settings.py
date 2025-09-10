@@ -53,11 +53,21 @@ else:
 # ==============================================================================
 # CONFIGURAÇÕES DE APLICAÇÃO E SEGURANÇA
 # ==============================================================================
+# --- Configurações de Hosts Permitidos ---
 ALLOWED_HOSTS = []
+
+# A Render define esta variável de ambiente automaticamente com a sua URL principal
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
+    # Adiciona a URL padrão da Render (ex: hidra-eco.onrender.com)
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    
+    # --- ADICIONE OS SEUS DOMÍNIOS PERSONALIZADOS AQUI ---
+    # Adicione o seu domínio principal e a versão com 'www'
+    ALLOWED_HOSTS.extend(['hidra-eco.com.br', 'www.hidra-eco.com.br'])
+
 else:
+    # Se não estiver na Render, assume ambiente local
     ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
 
 INSTALLED_APPS = [
