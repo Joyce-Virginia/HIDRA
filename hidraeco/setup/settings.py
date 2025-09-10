@@ -43,7 +43,12 @@ DEBUG = not IS_RENDER_ENV
 if IS_RENDER_ENV:
     print("A carregar configurações de PRODUÇÃO (Render)...")
 else:
-    print("A carregar configurações de DESENVOLVIMENTO (Local)...")
+    print("A carregar configurações de desenvolvimento (Local)...")
+    FIREBASE_CREDENTIALS_PATH = BASE_DIR / 'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
+    FIREBASE_CREDENTIALS_JSON = None
+
+    if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
+        raise FileNotFoundError(f"O ficheiro de credenciais local não foi encontrado em: {FIREBASE_CREDENTIALS_PATH}")
 
 # ==============================================================================
 # CONFIGURAÇÕES DE APLICAÇÃO E SEGURANÇA
@@ -102,7 +107,7 @@ else:
 # FIREBASE
 # ==============================================================================
 FIREBASE_DATABASE_URL = 'https://hidra-eco-default-rtdb.firebaseio.com'
-FIREBASE_STORAGE_BUCKET = 'hidra-eco-default-rtdb.appspot.com'
+FIREBASE_STORAGE_BUCKET = 'hidra-eco.firebasestorage.app'
 
 if not firebase_admin._apps:
     cred = None
