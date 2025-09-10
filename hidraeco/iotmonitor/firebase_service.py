@@ -47,46 +47,21 @@ class FirebaseService:
         tanto na Render (variável de ambiente) quanto localmente (ficheiro).
         """
         try:
-            '''if firebase_admin._apps:
-                firebase_logger.warning(
-                    "App Firebase já existe. Deletando para garantir reconfiguração completa...")
-                firebase_admin.delete_app(firebase_admin.get_app())'''
+            # Este serviço irá apenas reutilizar a conexão existente.
+            if not firebase_admin._apps:
+                # Esta mensagem de erro indica um problema de configuração mais sério
+                # se a app não foi inicializada antes de o serviço ser chamado.
+                raise RuntimeError("A aplicação Firebase não foi inicializada. Verifique a sua configuração em settings.py.")
 
-            cred = None
-            # 1. Tenta carregar a partir da variável de ambiente (para a Render)
-            if hasattr(settings, 'FIREBASE_CREDENTIALS_JSON') and settings.FIREBASE_CREDENTIALS_JSON:
-                firebase_logger.info(
-                    "A carregar credenciais a partir da variável de ambiente JSON.")
-                cred_dict = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
-                cred = credentials.Certificate(cred_dict)
-
-            # 2. Se não conseguir, tenta carregar a partir de um ficheiro (para o seu PC local)
-            elif hasattr(settings, 'FIREBASE_CREDENTIALS_PATH') and settings.FIREBASE_CREDENTIALS_PATH:
-                cred_path = settings.FIREBASE_CREDENTIALS_PATH
-                if os.path.exists(cred_path):
-                    firebase_logger.info(
-                        f"A carregar credenciais do ficheiro: {cred_path}")
-                    cred = credentials.Certificate(cred_path)
-
-            # 3. Se nenhuma das opções funcionar, lança um erro
-            if not cred:
-                raise ValueError(
-                    "Nenhuma configuração de credenciais Firebase (JSON ou PATH) foi encontrada.")
-
-            # Inicializa a app com as credenciais encontradas
-            self.app = firebase_admin.initialize_app(cred, {
-                'databaseURL': settings.FIREBASE_DATABASE_URL,
-                'storageBucket': settings.FIREBASE_STORAGE_BUCKET
-            })
-            firebase_logger.info(
-                f"Firebase inicializado com sucesso. Bucket: {settings.FIREBASE_STORAGE_BUCKET}")
-
+            self.app = firebase_admin.get_app()
             self.db_ref = db.reference('/')
             self.initialized = True
+            
+            # A mensagem de log confirma que a conexão está a ser reutilizada com sucesso.
+            firebase_logger.info("Serviço Firebase conectado à aplicação existente com sucesso.")
 
         except Exception as e:
-            firebase_logger.error(
-                f"Erro ao inicializar Firebase: {e}", exc_info=True)
+            firebase_logger.error(f"Erro ao conectar-se à aplicação Firebase existente: {e}", exc_info=True)
             self.initialized = False
 
     def test_connection(self) -> bool:
@@ -105,6 +80,7 @@ class FirebaseService:
         """
         Obtém a leitura mais recente do nó /leituras de forma segura.
         """
+        
 
         if not self.initialized:
             firebase_logger.warning(
