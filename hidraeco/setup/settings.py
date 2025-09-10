@@ -96,49 +96,44 @@ MIDDLEWARE = [
 # ==============================================================================
 # BANCO DE DADOS (DATABASE)
 # ==============================================================================
-if IS_RENDER_ENV:
-    # Em produção (Render), usa a variável de ambiente DATABASE_URL com Neon, etc.
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    # Localmente, usa um ficheiro SQLite simples
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 # ==============================================================================
-# FIREBASE
+# FIREBASE - LÓGICA FINAL E CONSOLIDADA
 # ==============================================================================
+
+# 1. Defina as suas URLs/IDs estáticas aqui
 FIREBASE_DATABASE_URL = 'https://hidra-eco-default-rtdb.firebaseio.com'
+#FIREBASE_STORAGE_BUCKET = 'hidra-eco-default-rtdb.appspot.com' 
 FIREBASE_STORAGE_BUCKET = 'hidra-eco.firebasestorage.app'
 
+# 2. Lógica de inicialização que só corre uma vez
 if not firebase_admin._apps:
     cred = None
     if IS_RENDER_ENV:
         # Na Render, carrega a partir da variável de ambiente
-        firebase_credentials_json = os.environ.get('FIREBASE_CREDENTIALS')
-        if firebase_credentials_json:
-            cred_dict = json.loads(firebase_credentials_json)
+        firebase_credentials_json_str = os.environ.get('FIREBASE_CREDENTIALS')
+        if firebase_credentials_json_str:
+            cred_dict = json.loads(firebase_credentials_json_str)
             cred = credentials.Certificate(cred_dict)
         else:
-            raise ValueError(
-                "A variável de ambiente FIREBASE_CREDENTIALS não foi configurada na Render.")
+            # Esta verificação é crucial e pára o deploy se a variável não existir
+            raise ValueError("A variável de ambiente FIREBASE_CREDENTIALS não foi configurada na Render.")
     else:
         # Localmente, carrega a partir do ficheiro
         cred_path = BASE_DIR / 'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
         if os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
         else:
-            raise FileNotFoundError(
-                f"Ficheiro de credenciais não encontrado localmente: {cred_path}")
-
+            # Esta verificação pára o servidor local se o ficheiro não for encontrado
+            raise FileNotFoundError(f"Ficheiro de credenciais não encontrado localmente: {cred_path}")
+    
+    # Finalmente, inicializa a aplicação Firebase com as credenciais carregadas
     firebase_admin.initialize_app(cred, {
         'databaseURL': FIREBASE_DATABASE_URL,
         'storageBucket': FIREBASE_STORAGE_BUCKET
