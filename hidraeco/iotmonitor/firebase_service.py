@@ -47,32 +47,29 @@ class FirebaseService:
         já existir, para garantir que as configurações corretas sejam sempre carregadas.
         """
         try:
-            # --- CORREÇÃO DEFINITIVA PARA O AUTO-RELOADER DO DJANGO ---
-            # Se uma app Firebase já existe (de um recarregamento anterior),
-            # nós a deletamos para forçar uma reinicialização limpa com as novas configurações.
-            '''if firebase_admin._apps:
+            if firebase_admin._apps:
                 firebase_logger.warning("App Firebase já existe. Deletando para garantir reconfiguração completa...")
-                firebase_admin.delete_app(firebase_admin.get_app())'''
+                firebase_admin.delete_app(firebase_admin.get_app())
 
-            # O código para carregar as credenciais (que já está correto)
+            cred = None
+            # 1. Tenta carregar a partir da variável de ambiente (para a Render)
             if hasattr(settings, 'FIREBASE_CREDENTIALS_JSON') and settings.FIREBASE_CREDENTIALS_JSON:
+                firebase_logger.info("A carregar credenciais a partir da variável de ambiente JSON.")
                 cred_dict = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
                 cred = credentials.Certificate(cred_dict)
+            
+            # 2. Se não conseguir, tenta carregar a partir de um ficheiro (para o seu PC local)
             elif hasattr(settings, 'FIREBASE_CREDENTIALS_PATH') and settings.FIREBASE_CREDENTIALS_PATH:
                 cred_path = settings.FIREBASE_CREDENTIALS_PATH
-                if not os.path.exists(cred_path):
-                    cred_path = os.path.join(settings.BASE_DIR, os.path.basename(cred_path))
-
                 if os.path.exists(cred_path):
-                    firebase_logger.info(f"Carregando credenciais do arquivo: {cred_path}")
+                    firebase_logger.info(f"A carregar credenciais do ficheiro: {cred_path}")
                     cred = credentials.Certificate(cred_path)
-                else:
-                    raise FileNotFoundError(f"Arquivo de credenciais não encontrado: {cred_path}")
-            else:
-                raise ValueError("Nenhuma configuração de credenciais Firebase encontrada")
 
-            # Agora, esta parte sempre será executada com o servidor "limpo",
-            # lendo as configurações corretas do seu ficheiro settings.py
+            # 3. Se nenhuma das opções funcionar, lança um erro
+            if not cred:
+                raise ValueError("Nenhuma configuração de credenciais Firebase (JSON ou PATH) foi encontrada.")
+
+            # Inicializa a app com as credenciais encontradas
             self.app = firebase_admin.initialize_app(cred, {
                 'databaseURL': settings.FIREBASE_DATABASE_URL,
                 'storageBucket': settings.FIREBASE_STORAGE_BUCKET
