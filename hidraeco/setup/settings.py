@@ -1,10 +1,8 @@
 import os
-from pathlib import Path
-import dj_database_url
 import json
+from pathlib import Path
 import firebase_admin
 from firebase_admin import credentials
-
 
 # import dj_database_url
 
@@ -29,7 +27,7 @@ SECRET_KEY = 'django-insecure-s%5w70mp^bo0#9vc5pm2(s10pwinu*0$nle3nh88-a#sr87lj7
 # ==============================================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get(
-    'SECRET_KEY', 'django-insecure-uma-chave-secreta-padrao-para-desenvolvimento')
+    'SECRET_KEY', 'django-insecure-s%5w70mp^bo0#9vc5pm2(s10pwinu*0$nle3nh88-a#sr87lj7')
 ROOT_URLCONF = 'setup.urls'
 WSGI_APPLICATION = 'setup.wsgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -44,11 +42,13 @@ if IS_RENDER_ENV:
     print("A carregar configurações de PRODUÇÃO (Render)...")
 else:
     print("A carregar configurações de desenvolvimento (Local)...")
-    FIREBASE_CREDENTIALS_PATH = BASE_DIR / 'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
+    FIREBASE_CREDENTIALS_PATH = BASE_DIR / \
+        'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
     FIREBASE_CREDENTIALS_JSON = None
 
     if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
-        raise FileNotFoundError(f"O ficheiro de credenciais local não foi encontrado em: {FIREBASE_CREDENTIALS_PATH}")
+        raise FileNotFoundError(
+            f"O ficheiro de credenciais local não foi encontrado em: {FIREBASE_CREDENTIALS_PATH}")
 
 # ==============================================================================
 # CONFIGURAÇÕES DE APLICAÇÃO E SEGURANÇA
@@ -61,7 +61,7 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     # Adiciona a URL padrão da Render (ex: hidra-eco.onrender.com)
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    
+
     # --- ADICIONE OS SEUS DOMÍNIOS PERSONALIZADOS AQUI ---
     # Adicione o seu domínio principal e a versão com 'www'
     ALLOWED_HOSTS.extend(['hidra-eco.com.br', 'www.hidra-eco.com.br'])
@@ -109,7 +109,7 @@ DATABASES = {
 
 # 1. Defina as suas URLs/IDs estáticas aqui
 FIREBASE_DATABASE_URL = 'https://hidra-eco-default-rtdb.firebaseio.com'
-#FIREBASE_STORAGE_BUCKET = 'hidra-eco-default-rtdb.appspot.com' 
+# FIREBASE_STORAGE_BUCKET = 'hidra-eco-default-rtdb.appspot.com'
 FIREBASE_STORAGE_BUCKET = 'hidra-eco.firebasestorage.app'
 
 # 2. Lógica de inicialização que só corre uma vez
@@ -121,9 +121,18 @@ if not firebase_admin._apps:
         if firebase_credentials_json_str:
             cred_dict = json.loads(firebase_credentials_json_str)
             cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred, {
+            'databaseURL': FIREBASE_DATABASE_URL,
+            'storageBucket': FIREBASE_STORAGE_BUCKET
+            })
+            print("Conexão com Firebase inicializada com sucesso. Dentro do Render")
+            
+        
         else:
-            # Esta verificação é crucial e pára o deploy se a variável não existir
-            raise ValueError("A variável de ambiente FIREBASE_CREDENTIALS não foi configurada na Render.")
+            raise ValueError(
+                "A variável de ambiente FIREBASE_CREDENTIALS não foi configurada na Render.")
+        
+        
     else:
         # Localmente, carrega a partir do ficheiro
         cred_path = BASE_DIR / 'hidra-eco-firebase-adminsdk-fbsvc-e8d6447316.json'
@@ -131,9 +140,10 @@ if not firebase_admin._apps:
             cred = credentials.Certificate(cred_path)
         else:
             # Esta verificação pára o servidor local se o ficheiro não for encontrado
-            raise FileNotFoundError(f"Ficheiro de credenciais não encontrado localmente: {cred_path}")
-    
-    # Finalmente, inicializa a aplicação Firebase com as credenciais carregadas
+            raise FileNotFoundError(
+                f"Ficheiro de credenciais não encontrado localmente: {cred_path}")
+
+    #  inicializa a aplicação Firebase com as credenciais carregadas
     firebase_admin.initialize_app(cred, {
         'databaseURL': FIREBASE_DATABASE_URL,
         'storageBucket': FIREBASE_STORAGE_BUCKET
