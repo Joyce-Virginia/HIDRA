@@ -50,9 +50,9 @@ class FirebaseService:
             # --- CORREÇÃO DEFINITIVA PARA O AUTO-RELOADER DO DJANGO ---
             # Se uma app Firebase já existe (de um recarregamento anterior),
             # nós a deletamos para forçar uma reinicialização limpa com as novas configurações.
-            if firebase_admin._apps:
+            '''if firebase_admin._apps:
                 firebase_logger.warning("App Firebase já existe. Deletando para garantir reconfiguração completa...")
-                firebase_admin.delete_app(firebase_admin.get_app())
+                firebase_admin.delete_app(firebase_admin.get_app())'''
 
             # O código para carregar as credenciais (que já está correto)
             if hasattr(settings, 'FIREBASE_CREDENTIALS_JSON') and settings.FIREBASE_CREDENTIALS_JSON:
